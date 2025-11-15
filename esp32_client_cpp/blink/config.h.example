@@ -1,0 +1,27 @@
+// WiFi Configuration Example
+// Copy this file to config.h and fill in your actual values
+// DO NOT commit config.h to git!
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// WiFi Credentials - Replace with your actual WiFi network details
+const char* WIFI_SSID = "your_wifi_ssid_here";
+const char* WIFI_PASSWORD = "your_wifi_password_here";
+
+// API Configuration - Replace with your actual API key
+#define ESP32_API_KEY "your_api_key_here"
+
+// Server Configuration - Base URL (no trailing slash)
+#define USE_PRODUCTION true
+
+#if USE_PRODUCTION
+const char* SERVER_BASE_URL = "https://matrix-miles-production.up.railway.app";
+#else
+const char* SERVER_BASE_URL = "https://your-test-server.com";
+#endif
+
+// User ID for API requests
+const int USER_ID = 1;
+
+#endif // CONFIG_H

@@ -1,0 +1,25 @@
+# Environment files
+.env
+.env.local
+
+# ESP32 Configuration (contains WiFi credentials)
+esp32_client_cpp/blink/config.h
+
+# Build artifacts
+*.o
+*.bin
+*.elf
+*.map
+build/
+tmp/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
