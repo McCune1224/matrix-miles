@@ -3,7 +3,7 @@
 .env.local
 
 # ESP32 Configuration (contains WiFi credentials)
-esp32_client_cpp/blink/config.h
+esp32_client_cpp/config.h
 
 # Build artifacts
 *.o
