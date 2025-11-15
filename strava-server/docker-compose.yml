@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: strava-postgres
+    environment:
+      POSTGRES_USER: strava_user
+      POSTGRES_PASSWORD: strava_password
+      POSTGRES_DB: strava_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U strava_user -d strava_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Strava Server Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: strava-server
+    ports:
+      - "8080:8080"
+    environment:
+      # Server Configuration
+      PORT: 8080
+      DOMAIN: http://localhost:8080
+      
+      # Database Configuration (connects to postgres service)
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: strava_user
+      DB_PASSWORD: strava_password
+      DB_NAME: strava_db
+      DB_SSLMODE: disable
+      
+      # Strava API Credentials (replace with your values)
+      STRAVA_CLIENT_ID: ${STRAVA_CLIENT_ID}
+      STRAVA_CLIENT_SECRET: ${STRAVA_CLIENT_SECRET}
+      STRAVA_REDIRECT_URI: http://localhost:8080/auth/callback
+      
+      # Security
+      ESP32_API_KEY: ${ESP32_API_KEY}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

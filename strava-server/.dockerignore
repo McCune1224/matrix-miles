@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Development tools
+.air.toml
+.vscode
+.idea
+
+# Documentation
+*.md
+!README.md
+
+# Test files
+*_test.go
+testdata/
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+server
+main
+
+# Dependencies (will be downloaded in Docker)
+vendor/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
