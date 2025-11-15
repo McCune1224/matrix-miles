@@ -22,17 +22,17 @@ clean: ## Clean build artifacts
 	rm -f server
 	rm -rf tmp/
 
-docker-build: ## Build Docker image
-	docker build -t strava-server:latest .
+docker-build: ## Build Docker image (run from project root)
+	cd .. && docker build -t strava-server:latest .
 
-docker-run: ## Run Docker container (requires .env file)
-	docker run --rm -p 8080:8080 --env-file .env strava-server:latest
+docker-run: ## Run Docker container (requires .env file in root)
+	docker run --rm -p 8080:8080 --env-file ../.env strava-server:latest
 
-docker-compose-up: ## Start services with docker-compose
-	docker-compose up --build
+docker-compose-up: ## Start services with docker-compose (run from project root)
+	cd .. && docker-compose up --build
 
-docker-compose-down: ## Stop docker-compose services
-	docker-compose down -v
+docker-compose-down: ## Stop docker-compose services (run from project root)
+	cd .. && docker-compose down
 
 docker-compose-logs: ## View docker-compose logs
 	docker-compose logs -f
