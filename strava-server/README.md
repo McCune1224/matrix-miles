@@ -4,38 +4,21 @@ A Go HTTP server using Echo framework that handles Strava OAuth authentication, 
 
 ## Features
 
-- ✅ Strava OAuth 2.0 authentication flow
-- ✅ Automatic token refresh
-- ✅ PostgreSQL database with sqlc-generated queries
-- ✅ REST API for ESP32 clients
-- ✅ Activity syncing from Strava API
-- ✅ Calendar data aggregation
-- ✅ User statistics
-
-## Architecture
-
-```
-┌─────────────┐
-│   Browser   │ → OAuth flow
-└──────┬──────┘
-       ↓
-┌──────────────────┐
-│  Go HTTP Server  │
-│  (Echo + sqlc)   │
-└────┬─────────┬───┘
-     ↓         ↓
-┌────────┐  ┌──────┐
-│ Postgres│  │ESP32 │
-└─────────┘  └──────┘
-```
+- Strava OAuth 2.0 authentication flow
+- Automatic token refresh
+- PostgreSQL database with sqlc-generated queries
+- REST API for ESP32 clients
+- Activity syncing from Strava API
+- Calendar data aggregation
+- User statistics
 
 ## Tech Stack
 
-- **Web Framework**: [Echo](https://echo.labstack.com/)
-- **Database**: PostgreSQL
-- **Database Queries**: [sqlc](https://sqlc.dev/) + [sqlx](https://github.com/jmoiron/sqlx)
-- **OAuth Client**: Custom Strava implementation
-- **Config**: [godotenv](https://github.com/joho/godotenv)
+- Web Framework: [Echo](https://echo.labstack.com/)
+- Database: PostgreSQL
+- Database Queries: [sqlc](https://sqlc.dev/) + [sqlx](https://github.com/jmoiron/sqlx)
+- OAuth Client: Custom Strava implementation
+- Config: [godotenv](https://github.com/joho/godotenv)
 
 ## Prerequisites
 
@@ -139,9 +122,9 @@ go run ./cmd/server/main.go
 
 You should see:
 ```
-✓ Database connected successfully
-🚀 Server starting on :8080
-📍 OAuth login: http://localhost:8080/auth/login
+Database connected successfully
+Server starting on :8080
+OAuth login: http://localhost:8080/auth/login
 ```
 
 ## API Endpoints
