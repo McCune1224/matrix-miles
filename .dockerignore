@@ -6,15 +6,19 @@
 .env
 .env.*
 !.env.example
+strava-server/.env
+strava-server/.env.*
 
 # Development tools
 .air.toml
 .vscode
 .idea
+strava-server/.air.toml
 
-# Documentation
+# Documentation (keep README)
 *.md
 !README.md
+!strava-server/README.md
 
 # Test files
 *_test.go
@@ -28,6 +32,14 @@ testdata/
 *.dylib
 server
 main
+
+# ESP32 files (not needed for server)
+esp32_client_cpp/
+c-proof-of-concept/
+archive/
+
+# Hardware docs
+*.pdf
 
 # Dependencies (will be downloaded in Docker)
 vendor/

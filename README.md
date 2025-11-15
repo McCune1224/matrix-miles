@@ -92,11 +92,23 @@ See [NEOVIM_SETUP.md](NEOVIM_SETUP.md) for configuring Neovim for Arduino C++ de
 
 ```
 matrix-miles/
+├── Dockerfile                  # 🐳 Root Dockerfile for Railway deployment
+├── docker-compose.yml          # 🐳 Local development with Docker
+├── railway.json                # 🚂 Railway.app configuration
+├── .dockerignore              # Docker build exclusions
+│
 ├── strava-server/              # Go backend server
 │   ├── cmd/                    # Application entry point
 │   ├── internal/               # Internal packages (handlers, database)
 │   ├── db/                     # Database migrations and queries
+│   ├── RAILWAY_DEPLOYMENT.md   # 🚂 Railway deployment guide
+│   ├── ESP32_PRODUCTION_CONFIG.md # ESP32 production setup
 │   └── README.md               # Server documentation
+│
+├── esp32_client_cpp/           # ESP32 C++ client projects
+│   └── blink/                  # ESP32 HTTP client example
+│       ├── blink.ino           # Main sketch with API calls
+│       └── sketch.yaml         # Arduino CLI config
 │
 ├── arduino_client/             # Arduino Nano ESP32 C++ client
 │   ├── arduino_client.ino      # Main sketch
@@ -115,6 +127,17 @@ matrix-miles/
 ├── NEXT_SESSION.md             # Quick reference for next work session
 └── SETUP_COMPLETE.md           # Current project status
 ```
+
+### 🐳 Docker & Railway Deployment
+
+This monorepo includes production deployment configuration at the root:
+
+- **`Dockerfile`** - Multi-stage build that compiles the strava-server subdirectory
+- **`docker-compose.yml`** - Local testing with PostgreSQL
+- **`railway.json`** - Railway.app deployment configuration
+- **`.dockerignore`** - Excludes ESP32 and other unrelated files from build
+
+**Deploy to Railway:** Push the entire `matrix-miles` repo to GitHub, connect to Railway, and it will automatically build and deploy the strava-server using the root Dockerfile.
 
 ## Documentation
 

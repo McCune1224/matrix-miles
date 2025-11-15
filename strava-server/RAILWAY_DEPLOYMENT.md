@@ -1,6 +1,6 @@
 # Railway Deployment Guide
 
-This guide will help you deploy your Strava Server to Railway.app with PostgreSQL.
+This guide will help you deploy your Strava Server to Railway.app with PostgreSQL from the monorepo.
 
 ## Prerequisites
 
@@ -8,12 +8,28 @@ This guide will help you deploy your Strava Server to Railway.app with PostgreSQ
 - GitHub account (for connecting your repository)
 - Strava API credentials (from https://www.strava.com/settings/api)
 
+## Project Structure
+
+This is a monorepo with multiple projects:
+```
+matrix-miles/
+├── Dockerfile              # Root Dockerfile that builds strava-server
+├── docker-compose.yml      # Local development setup
+├── railway.json            # Railway configuration
+├── .dockerignore          # Docker build exclusions
+├── strava-server/         # Go server application
+├── esp32_client_cpp/      # ESP32 client code
+└── ...
+```
+
+The Dockerfile at the root builds the strava-server subdirectory, allowing Railway to deploy from a single repository.
+
 ## Deployment Steps
 
 ### 1. Push Your Code to GitHub
 
 ```bash
-cd /home/mckusa/Code/matrix-miles/strava-server
+cd /home/mckusa/Code/matrix-miles
 
 # Initialize git if not already done
 git init
@@ -21,7 +37,7 @@ git add .
 git commit -m "Add Railway deployment configuration"
 
 # Push to GitHub (replace with your repo URL)
-git remote add origin https://github.com/YOUR_USERNAME/strava-server.git
+git remote add origin https://github.com/YOUR_USERNAME/matrix-miles.git
 git push -u origin main
 ```
 
@@ -29,8 +45,10 @@ git push -u origin main
 
 1. Go to https://railway.app/new
 2. Click "Deploy from GitHub repo"
-3. Select your `strava-server` repository
-4. Railway will detect the Dockerfile automatically
+3. Select your `matrix-miles` repository
+4. Railway will detect the Dockerfile at the root automatically
+   - The Dockerfile is configured to build only the strava-server subdirectory
+   - No additional configuration needed!
 
 ### 3. Add PostgreSQL Database
 
@@ -152,16 +170,27 @@ curl -u admin:your_admin_password \
 
 ## Testing Locally with Docker
 
-Before deploying, you can test locally:
+Before deploying, you can test locally from the root of the repository:
 
 ```bash
+# From the matrix-miles root directory
+cd /home/mckusa/Code/matrix-miles
+
 # Build and run with docker-compose
 docker-compose up --build
 
 # Or build and run manually
 docker build -t strava-server .
-docker run -p 8080:8080 --env-file .env strava-server
+docker run -p 8080:8080 --env-file strava-server/.env strava-server
+
+# To use environment variables from strava-server/.env
+docker run -p 8080:8080 --env-file strava-server/.env strava-server
 ```
+
+The Dockerfile at the root is configured to:
+- Copy only the strava-server subdirectory
+- Exclude ESP32 and other unrelated files (via .dockerignore)
+- Build the Go server from strava-server/cmd/main.go
 
 ## Environment Variables Reference
 
