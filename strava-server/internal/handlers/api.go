@@ -103,6 +103,8 @@ func (h *APIHandler) SyncActivities(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
 	}
+	queryMonth := c.QueryParam("month")
+	queryYear := c.QueryParam("year")
 
 	ctx := context.Background()
 
@@ -140,11 +142,35 @@ func (h *APIHandler) SyncActivities(c echo.Context) error {
 		accessToken = tokenResp.AccessToken
 	}
 
-	// Fetch activities from Strava (last 30 days)
-	thirtyDaysAgo := time.Now().AddDate(0, 0, -30).Unix()
-	activities, err := h.stravaClient.GetActivities(accessToken, thirtyDaysAgo, 100)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch activities: "+err.Error())
+	var activities []strava.Activity
+
+	if queryMonth != "" && queryYear != "" {
+		// Fetch activities for specific month
+		month, err := strconv.Atoi(queryMonth)
+		if err != nil || month < 1 || month > 12 {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid month")
+		}
+
+		year, err := strconv.Atoi(queryYear)
+		if err != nil || year < 2000 || year > time.Now().Year() {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid year")
+		}
+
+		// Calculate date range
+		firstDay := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+		lastDay := firstDay.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+
+		activities, err = h.stravaClient.GetActivitiesInRange(accessToken, firstDay.Unix(), lastDay.Unix())
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch activities: "+err.Error())
+		}
+	} else {
+		// Fetch activities from Strava (last 30 days)
+		thirtyDaysAgo := time.Now().AddDate(0, 0, -30).Unix()
+		activities, err = h.stravaClient.GetActivities(accessToken, thirtyDaysAgo, 100)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch activities: "+err.Error())
+		}
 	}
 
 	// Save activities to database
@@ -167,7 +193,7 @@ func (h *APIHandler) SyncActivities(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	return c.JSON(http.StatusOK, map[string]any{
 		"message": "Sync completed",
 		"fetched": len(activities),
 		"saved":   saved,

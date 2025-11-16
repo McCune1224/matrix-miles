@@ -111,6 +111,7 @@ func main() {
 		return username == cfg.Security.AdminUsername && password == cfg.Security.AdminPassword, nil
 	}))
 	admin.POST("/sync/:userId", apiHandler.SyncActivities)
+	admin.GET("/sync/:userId", apiHandler.SyncActivities)
 
 	// Log viewing routes
 	admin.GET("/logs", logHandler.GetRecentLogs)

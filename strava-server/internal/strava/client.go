@@ -40,14 +40,14 @@ type Athlete struct {
 }
 
 type Activity struct {
-	ID              int64     `json:"id"`
-	Name            string    `json:"name"`
-	Type            string    `json:"type"`
-	Distance        float64   `json:"distance"`
-	MovingTime      int       `json:"moving_time"`
-	ElapsedTime     int       `json:"elapsed_time"`
-	StartDate       time.Time `json:"start_date"`
-	StartDateLocal  time.Time `json:"start_date_local"`
+	ID             int64     `json:"id"`
+	Name           string    `json:"name"`
+	Type           string    `json:"type"`
+	Distance       float64   `json:"distance"`
+	MovingTime     int       `json:"moving_time"`
+	ElapsedTime    int       `json:"elapsed_time"`
+	StartDate      time.Time `json:"start_date"`
+	StartDateLocal time.Time `json:"start_date_local"`
 }
 
 func NewClient(clientID, clientSecret, redirectURI string) *Client {
@@ -171,4 +171,54 @@ func (c *Client) GetActivities(accessToken string, after int64, perPage int) ([]
 	}
 
 	return activities, nil
+}
+
+func (c *Client) GetActivitiesInRange(accessToken string, startDayUnix, endDayUnix int64) ([]Activity, error) {
+	allActivities := []Activity{}
+	page := 1
+	perPage := 100
+	for {
+		endpoint := fmt.Sprintf("%s/api/v3/athlete/activities", stravaAPIBase)
+		params := url.Values{}
+		params.Add("per_page", fmt.Sprintf("%d", perPage))
+		params.Add("page", fmt.Sprintf("%d", page))
+
+		reqURL := fmt.Sprintf("%s?%s", endpoint, params.Encode())
+		req, err := http.NewRequest("GET", reqURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to make request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("strava API error (status %d): %s", resp.StatusCode, string(body))
+		}
+
+		var activities []Activity
+		if err := json.NewDecoder(resp.Body).Decode(&activities); err != nil {
+			return nil, fmt.Errorf("failed to parse activities: %w", err)
+		}
+
+		if len(activities) == 0 {
+			break
+		}
+
+		for _, activity := range activities {
+			startUnix := activity.StartDate.Unix()
+			if startUnix >= startDayUnix && startUnix <= endDayUnix {
+				allActivities = append(allActivities, activity)
+			}
+		}
+		page++
+	}
+
+	return allActivities, nil
 }
