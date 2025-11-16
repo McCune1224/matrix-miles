@@ -1,22 +1,25 @@
 # Matrix Miles
 
-A production-ready Strava activity tracking system that bridges fitness data with embedded hardware. Features a Go backend API and ESP32 microcontroller client for real-world IoT deployment.
+A production-ready Strava activity tracking system that bridges fitness data with embedded hardware. This project includes a Go backend API and an ESP32 client for real world IoT deployments.
 
-## System Architecture
+## Overview
 
-**Backend (Go 1.25)**
-- Strava OAuth 2.0 authentication with automatic token refresh
-- PostgreSQL database with comprehensive schema and migrations
-- REST API with API key authentication for IoT devices
-- Structured logging with rotation and admin log viewing
-- Production deployment on Railway with Docker
+Matrix Miles combines a Go backend with an ESP32 based client to collect, process, and visualize Strava activity data in an embedded environment.
 
-**Embedded Client (C++/ESP32)**
-- WiFi connectivity with automatic reconnection
-- HTTP client for secure API communication
-- JSON parsing for activity and calendar data
-- Configurable fetch intervals and user targeting
-- Ready for LED matrix display integration
+## Architecture
+
+- **Backend (Go 1.25)**
+  - Strava OAuth 2.0 authentication with automatic token refresh
+  - PostgreSQL database with comprehensive schema and migrations
+  - REST API with API key authentication for IoT devices
+  - Structured logging with rotation and an admin log viewer
+  - Production deployment on Railway with Docker
+- **Embedded Client (C/C++ for ESP32)**
+  - WiFi connectivity with automatic reconnection
+  - HTTP client for secure API communication
+  - JSON parsing for activity and calendar data
+  - Configurable fetch intervals and user targeting
+  - Ready for LED matrix display integration
 
 ## Project Structure
 
@@ -44,7 +47,7 @@ matrix-miles/
 
 ## Current Status
 
-✅ **Production Ready Components**
+**Production Ready Components**
 - Complete OAuth flow with token management
 - Database schema with proper indexing and constraints
 - API security with API key authentication
@@ -52,78 +55,42 @@ matrix-miles/
 - Working ESP32 HTTP client with JSON parsing
 - Docker containerization and Railway deployment
 
-⏳ **Next Phase**
+**Next Phase**
 - LED matrix display integration (MAX7219)
 - Calendar visualization algorithms
 - Power management and deep sleep optimization
 
 ## Technical Highlights
 
-- **Clean Architecture**: Well-structured Go backend with separation of concerns
-- **Database Design**: Proper schema with relationships, indexes, and migrations
-- **Security**: OAuth 2.0, API keys, and secure token handling
-- **Observability**: Comprehensive logging with admin dashboard
-- **Embedded Systems**: Robust WiFi and HTTP client implementation
-- **DevOps**: Docker, Railway deployment, and development tooling
+- Clean Architecture: Well-structured Go backend with separation of concerns
+- Database Design: Proper schema with relationships, indexes, and migrations
+- Security: OAuth 2.0, API keys, and secure token handling
+- Observability: Comprehensive logging with admin dashboard
+- Embedded Systems: Robust WiFi and HTTP client implementation
+- DevOps: Docker, Railway deployment, and development tooling
 
 ## Deployment
 
 **Production**: Automatically deployed on Railway.app
-- Backend API: `https://matrix-miles-production.up.railway.app`
-- Health check: `/health`
-- OAuth: `/auth/login`
-
-**Local Development**:
-```bash
-# Start PostgreSQL with Docker Compose
-docker-compose up -d
-
-# Run backend server
-cd strava-server && go run ./cmd/main.go
-
-# Flash ESP32 client
-cd esp32_client_cpp && make flash
-```
+- Backend API: https://matrix-miles-production.up.railway.app
+- Health check: /health
+- OAuth: /auth/login
 
 ## API Endpoints
 
 **Public (OAuth)**
-- `GET /auth/login` - Initiate Strava OAuth flow
-- `GET /auth/callback` - Handle OAuth callback
+- GET /auth/login - Initiate Strava OAuth flow
+- GET /auth/callback - Handle OAuth callback
 
 **Protected (API Key Required)**
-- `GET /api/activities/recent/:userId` - Recent activities
-- `GET /api/activities/calendar/:userId/:year/:month` - Monthly calendar data
-- `GET /api/stats/:userId` - User statistics
+- GET /api/activities/recent/:userId - Recent activities
+- GET /api/activities/calendar/:userId/:year/:month - Monthly calendar data
+- GET /api/stats/:userId - User statistics
 
 **Admin (Basic Auth)**
-- `POST /admin/sync/:userId` - Force activity sync
-- `GET /admin/logs` - View application logs
-- `GET /admin/logs/level/:level` - Filter logs by level
-
-## Getting Started
-
-1. **Set up Strava API credentials**
-   - Register application at https://www.strava.com/settings/api
-   - Configure redirect URI: `{DOMAIN}/auth/callback`
-
-2. **Configure environment**
-   ```bash
-   cp strava-server/.env.example strava-server/.env
-   # Edit with your Strava credentials and database URL
-   ```
-
-3. **Deploy backend**
-   - Option A: Push to GitHub and connect to Railway
-   - Option B: Local development with Docker Compose
-
-4. **Configure ESP32 client**
-   ```bash
-   cd esp32_client_cpp
-   cp config.h.example config.h
-   # Edit config.h with WiFi and API credentials
-   make flash
-   ```
+- POST /admin/sync/:userId - Force activity sync
+- GET /admin/logs - View application logs
+- GET /admin/logs/level/:level - Filter logs by level
 
 ## Hardware Requirements
 
@@ -132,9 +99,9 @@ cd esp32_client_cpp && make flash
 
 ## Technology Stack
 
-**Backend**: Go 1.25, Echo framework, PostgreSQL, pgx, sqlc, zap logging
-**Embedded**: Arduino C++, ESP32 WiFi, HTTPClient, ArduinoJson
-**Infrastructure**: Docker, Railway.app, GitHub Actions
+- Backend: Go 1.25, Echo framework, PostgreSQL, pgx, sqlc, zap logging
+- Embedded: Arduino C/C++, ESP32 WiFi, HTTPClient, ArduinoJson
+- Infrastructure: Docker, Railway.app, GitHub Actions
 
 ## Contributing
 
