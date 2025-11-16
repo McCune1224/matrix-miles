@@ -1,10 +1,16 @@
 -- name: GetActivity :one
-SELECT * FROM activities
-WHERE id = $1 LIMIT 1;
+select *
+from activities
+where id = $1
+limit 1
+;
 
 -- name: GetActivityByStravaID :one
-SELECT * FROM activities
-WHERE strava_activity_id = $1 LIMIT 1;
+select *
+from activities
+where strava_activity_id = $1
+limit 1
+;
 
 -- name: CreateActivity :one
 INSERT INTO activities (
@@ -47,44 +53,51 @@ DO UPDATE SET
 RETURNING *;
 
 -- name: ListActivitiesByUser :many
-SELECT * FROM activities
-WHERE user_id = $1
-ORDER BY start_date DESC
-LIMIT $2 OFFSET $3;
+select *
+from activities
+where user_id = $1
+order by start_date desc
+limit $2
+offset $3
+;
 
 -- name: GetRecentActivities :many
-SELECT * FROM activities
-WHERE user_id = $1
-ORDER BY start_date DESC
-LIMIT $2;
+select *
+from activities
+where user_id = $1
+order by start_date desc
+limit $2
+;
 
 -- name: GetActivitiesByDateRange :many
-SELECT * FROM activities
-WHERE user_id = $1
-  AND start_date >= $2
-  AND start_date <= $3
-ORDER BY start_date DESC;
+select *
+from activities
+where user_id = $1 and start_date >= $2 and start_date <= $3
+order by start_date desc
+;
 
 -- name: GetActivityStats :one
-SELECT 
-    COUNT(*) as total_activities,
-    COALESCE(SUM(distance), 0) as total_distance,
-    COALESCE(SUM(moving_time), 0) as total_time
-FROM activities
-WHERE user_id = $1;
+select
+    count(*) as total_activities,
+    coalesce(sum(distance), 0) as total_distance,
+    coalesce(sum(moving_time), 0) as total_time
+from activities
+where user_id = $1
+;
 
 -- name: GetCalendarData :many
-SELECT 
-    DATE(start_date) as activity_date,
-    COUNT(*) as count,
-    SUM(distance) as total_distance
-FROM activities
-WHERE user_id = $1
-  AND start_date >= $2
-  AND start_date <= $3
-GROUP BY DATE(start_date)
-ORDER BY activity_date;
+select
+    date(start_date) as activity_date,
+    count(*) as count,
+    round(sum(distance)::numeric, 2) as total_distance
+from activities
+where user_id = $1 and start_date >= $2 and start_date <= $3
+group by date(start_date)
+order by activity_date
+;
 
 -- name: DeleteActivity :exec
-DELETE FROM activities
-WHERE id = $1;
+delete from activities
+where id = $1
+;
+
