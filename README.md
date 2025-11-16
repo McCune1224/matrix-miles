@@ -1,6 +1,6 @@
 # Matrix Miles
 
-A production-ready Strava activity tracking system that bridges fitness data with embedded hardware. This project includes a Go backend API and an ESP32 client for real world IoT deployments.
+IoT Project to get Strava's running activity tracking system that bridges fitness data with embedded hardware. This project includes a Go web server to handle API / Oauth Logic with Strava that communicates with an ESP32 client for displaying data on an LED Matrix (calendar view, monthly / weekly stats, best preformances, etc).
 
 ## Overview
 
@@ -14,7 +14,7 @@ Matrix Miles combines a Go backend with an ESP32 based client to collect, proces
   - REST API with API key authentication for IoT devices
   - Structured logging with rotation and an admin log viewer
   - Production deployment on Railway with Docker
-- **Embedded Client (C/C++ for ESP32)**
+- **Embedded Client (C++ for ESP32)**
   - WiFi connectivity with automatic reconnection
   - HTTP client for secure API communication
   - JSON parsing for activity and calendar data
@@ -47,7 +47,7 @@ matrix-miles/
 
 ## Current Status
 
-**Production Ready Components**
+**Completed Components**
 - Complete OAuth flow with token management
 - Database schema with proper indexing and constraints
 - API security with API key authentication
@@ -55,15 +55,12 @@ matrix-miles/
 - Working ESP32 HTTP client with JSON parsing
 - Docker containerization and Railway deployment
 
-**Next Phase**
+**Next Goals**
 - LED matrix display integration (MAX7219)
 - Calendar visualization algorithms
 - Power management and deep sleep optimization
 
 ## Technical Highlights
-
-- Clean Architecture: Well-structured Go backend with separation of concerns
-- Database Design: Proper schema with relationships, indexes, and migrations
 - Security: OAuth 2.0, API keys, and secure token handling
 - Observability: Comprehensive logging with admin dashboard
 - Embedded Systems: Robust WiFi and HTTP client implementation
@@ -76,27 +73,6 @@ matrix-miles/
 - Health check: /health
 - OAuth: /auth/login
 
-## API Endpoints
-
-**Public (OAuth)**
-- GET /auth/login - Initiate Strava OAuth flow
-- GET /auth/callback - Handle OAuth callback
-
-**Protected (API Key Required)**
-- GET /api/activities/recent/:userId - Recent activities
-- GET /api/activities/calendar/:userId/:year/:month - Monthly calendar data
-- GET /api/stats/:userId - User statistics
-
-**Admin (Basic Auth)**
-- POST /admin/sync/:userId - Force activity sync
-- GET /admin/logs - View application logs
-- GET /admin/logs/level/:level - Filter logs by level
-
-## Hardware Requirements
-
-- ESP32 development board (tested with ESP32-S3)
-- Optional: MAX7219 LED matrix for display (future phase)
-
 ## Technology Stack
 
 - Backend: Go 1.25, Echo framework, PostgreSQL, pgx, sqlc, zap logging
@@ -105,7 +81,7 @@ matrix-miles/
 
 ## Contributing
 
-This is a personal project showcasing full-stack IoT development. The codebase demonstrates production-ready practices for embedded systems integration with modern backend services.
+This is a personal project showcasing an IoT device talking with a dedicated Cloud Server / infra. Feel free to give feedback or if you want help getting this forked / how to set something similar up yourself, reach out :) 
 
 ## License
 
