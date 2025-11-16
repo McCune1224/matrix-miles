@@ -1,118 +1,145 @@
 # Matrix Miles
 
-A Strava activity tracking display using an Arduino Nano ESP32 and LED matrix. Helps me with tracking my running activities with a visual calendar display powered by real-time data from the Strava API. Keeps me motivated :)
+A production-ready Strava activity tracking system that bridges fitness data with embedded hardware. Features a Go backend API and ESP32 microcontroller client for real-world IoT deployment.
 
-## Overview
-Matrix Miles consists of two main components:
+## System Architecture
 
-1. **Go Backend Server** - Handles Strava OAuth, token management, and provides a REST API
-2. **Arduino Nano ESP32 Client** - C++ client that fetches activity data and displays it on an LED matrix
+**Backend (Go 1.25)**
+- Strava OAuth 2.0 authentication with automatic token refresh
+- PostgreSQL database with comprehensive schema and migrations
+- REST API with API key authentication for IoT devices
+- Structured logging with rotation and admin log viewing
+- Production deployment on Railway with Docker
 
-## Hardware Used
-
-- **Arduino Nano ESP32** (ESP32-S3 based)
-- LED Matrix MAX7219 
-
-## Software Used
-
-  - Go 1.25 (for backend server)
-  - PostgreSQL 14+ (or Railway/cloud hosted)
-  - arduino-cli (for ESP32 development)
-  - Neovim (or your preferred editor)
-  
-- **Strava API:**
-  - Strava API credentials ([Get them here](https://www.strava.com/settings/api))
+**Embedded Client (C++/ESP32)**
+- WiFi connectivity with automatic reconnection
+- HTTP client for secure API communication
+- JSON parsing for activity and calendar data
+- Configurable fetch intervals and user targeting
+- Ready for LED matrix display integration
 
 ## Project Structure
 
 ```
 matrix-miles/
-├── Dockerfile                  # Root Dockerfile for Railway deployment
-├── docker-compose.yml          # Local development with Docker
-├── railway.json                # Railway.app configuration
-├── .dockerignore              # Docker build exclusions
+├── strava-server/              # Go backend (production ready)
+│   ├── cmd/main.go             # Application entry point
+│   ├── internal/               # Clean architecture layers
+│   │   ├── database/           # SQLC generated types and queries
+│   │   ├── handlers/           # HTTP request handlers
+│   │   ├── services/           # Business logic services
+│   │   └── strava/             # Strava API integration
+│   ├── db/migrations/          # Database schema evolution
+│   └── pkg/                    # Shared utilities
 │
-├── strava-server/              # Go backend server
-│   ├── cmd/                    # Application entry point
-│   ├── internal/               # Internal packages (handlers, database)
-│   ├── db/                     # Database migrations and queries
-│   ├── RAILWAY_DEPLOYMENT.md   # Railway deployment guide
-│   ├── ESP32_PRODUCTION_CONFIG.md # ESP32 production setup
-│   └── README.md               # Server documentation
+├── esp32_client_cpp/           # ESP32 client (functional)
+│   ├── blink.ino               # Working HTTP client implementation
+│   ├── config.h.example        # Configuration template
+│   └── Makefile                # Build automation
 │
-├── esp32_client_cpp/           # ESP32 C++ client projects
-│   └── blink/                  # ESP32 HTTP client example
-│       ├── blink.ino           # Main sketch with API calls
-│       └── sketch.yaml         # Arduino CLI config
-│
-├── arduino_client/             # Arduino Nano ESP32 C++ client
-│   ├── arduino_client.ino      # Main sketch
-│   ├── config.h                # Configuration
-│   ├── api_client.cpp/h        # HTTP API client
-│   └── display.cpp/h           # LED matrix control
-│
-├── c-proof-of-concept/         # C prototype (reference only)
-│
-├── archive/                    # Old MicroPython documentation
-│
-├── README.md                   # This file
-├── ARDUINO_NANO_ESP32_SETUP.md # Hardware setup guide
-├── CPP_CLIENT_GUIDE.md         # C++ development guide
-├── NEOVIM_SETUP.md             # Editor setup guide
-├── NEXT_SESSION.md             # Quick reference for next work session
-└── SETUP_COMPLETE.md           # Current project status
+├── Dockerfile                  # Multi-stage production build
+├── docker-compose.yml          # Local development environment
+└── railway.json                # Cloud deployment configuration
 ```
 
-### Docker & Railway Deployment
+## Current Status
 
-This monorepo includes production deployment configuration at the root:
+✅ **Production Ready Components**
+- Complete OAuth flow with token management
+- Database schema with proper indexing and constraints
+- API security with API key authentication
+- Structured logging with admin interface
+- Working ESP32 HTTP client with JSON parsing
+- Docker containerization and Railway deployment
 
-- **`Dockerfile`** - Multi-stage build that compiles the strava-server subdirectory
-- **`docker-compose.yml`** - Local testing with PostgreSQL
-- **`railway.json`** - Railway.app deployment configuration
-- **`.dockerignore`** - Excludes ESP32 and other unrelated files from build
+⏳ **Next Phase**
+- LED matrix display integration (MAX7219)
+- Calendar visualization algorithms
+- Power management and deep sleep optimization
 
-**Deploy to Railway:** Push the entire `matrix-miles` repo to GitHub, connect to Railway, and it will automatically build and deploy the strava-server using the root Dockerfile.
+## Technical Highlights
 
-## Features
+- **Clean Architecture**: Well-structured Go backend with separation of concerns
+- **Database Design**: Proper schema with relationships, indexes, and migrations
+- **Security**: OAuth 2.0, API keys, and secure token handling
+- **Observability**: Comprehensive logging with admin dashboard
+- **Embedded Systems**: Robust WiFi and HTTP client implementation
+- **DevOps**: Docker, Railway deployment, and development tooling
 
-### Backend (WIP)
-- Strava OAuth 2.0 authentication
-- Automatic token refresh
-- Activity syncing from Strava
-- Calendar data aggregation
-- User statistics
-- REST API for ESP32 clients
+## Deployment
 
-### Arduino Client (WIP)
-- WiFi connectivity
-- HTTP client for API calls
-- JSON parsing for activity data
-- Configuration management
-- Future: LED matrix display
-- Future: Activity calendar visualization
+**Production**: Automatically deployed on Railway.app
+- Backend API: `https://matrix-miles-production.up.railway.app`
+- Health check: `/health`
+- OAuth: `/auth/login`
 
-## Future Enhancements
+**Local Development**:
+```bash
+# Start PostgreSQL with Docker Compose
+docker-compose up -d
 
-- [ ] LED matrix display integration (MAX7219)
-- [ ] Calendar visualization on matrix
-- [ ] Realtime Webhook Updating (as opposed to scheduled / polled updates)
-- [ ] Button controls for display modes
-- [ ] ?? Deep sleep mode for power saving
-- [ ] ?? Multiple user support
-- [ ] ?? Web configuration portal
+# Run backend server
+cd strava-server && go run ./cmd/main.go
+
+# Flash ESP32 client
+cd esp32_client_cpp && make flash
+```
+
+## API Endpoints
+
+**Public (OAuth)**
+- `GET /auth/login` - Initiate Strava OAuth flow
+- `GET /auth/callback` - Handle OAuth callback
+
+**Protected (API Key Required)**
+- `GET /api/activities/recent/:userId` - Recent activities
+- `GET /api/activities/calendar/:userId/:year/:month` - Monthly calendar data
+- `GET /api/stats/:userId` - User statistics
+
+**Admin (Basic Auth)**
+- `POST /admin/sync/:userId` - Force activity sync
+- `GET /admin/logs` - View application logs
+- `GET /admin/logs/level/:level` - Filter logs by level
+
+## Getting Started
+
+1. **Set up Strava API credentials**
+   - Register application at https://www.strava.com/settings/api
+   - Configure redirect URI: `{DOMAIN}/auth/callback`
+
+2. **Configure environment**
+   ```bash
+   cp strava-server/.env.example strava-server/.env
+   # Edit with your Strava credentials and database URL
+   ```
+
+3. **Deploy backend**
+   - Option A: Push to GitHub and connect to Railway
+   - Option B: Local development with Docker Compose
+
+4. **Configure ESP32 client**
+   ```bash
+   cd esp32_client_cpp
+   cp config.h.example config.h
+   # Edit config.h with WiFi and API credentials
+   make flash
+   ```
+
+## Hardware Requirements
+
+- ESP32 development board (tested with ESP32-S3)
+- Optional: MAX7219 LED matrix for display (future phase)
+
+## Technology Stack
+
+**Backend**: Go 1.25, Echo framework, PostgreSQL, pgx, sqlc, zap logging
+**Embedded**: Arduino C++, ESP32 WiFi, HTTPClient, ArduinoJson
+**Infrastructure**: Docker, Railway.app, GitHub Actions
 
 ## Contributing
 
-This is a personal project, but suggestions and improvements are welcome!
+This is a personal project showcasing full-stack IoT development. The codebase demonstrates production-ready practices for embedded systems integration with modern backend services.
 
 ## License
 
 MIT
-
-## Acknowledgments
-
-- [Strava API](https://developers.strava.com/)
-- [Arduino](https://www.arduino.cc/)
-- [Echo Framework](https://echo.labstack.com/)
-- [arduino-cli](https://github.com/arduino/arduino-cli)
