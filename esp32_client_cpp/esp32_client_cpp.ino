@@ -3,15 +3,17 @@
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>  // Install via Library Manager if not present
-#include "config.h"       // Contains WiFi credentials and API keys
+#include "config.hpp"     // Contains WiFi credentials and API keys
+#include "CalendarDisplay.h"
 
 #define USE_SERIAL Serial
 
 // Timing
-const unsigned long FETCH_INTERVAL_MS = 10000;  // 5 minutes in milliseconds
+const unsigned long FETCH_INTERVAL_MS = 10000;  // 10 seconds for testing
 unsigned long lastFetchTime = 0;
 
 WiFiMulti wifiMulti;
+CalendarDisplay calendar;
 
 void setup() {
   USE_SERIAL.begin(115200);
@@ -62,26 +64,24 @@ void fetchActivities() {
       USE_SERIAL.println(payload);
       USE_SERIAL.println("=====================================\n");
 
-      // Optional: Parse JSON for better formatting
-      // Uncomment if ArduinoJson library is installed
+      // Parse JSON for calendar display
       DynamicJsonDocument doc(8192);
       DeserializationError error = deserializeJson(doc, payload);
 
       if (!error) {
         JsonArray activities = doc.as<JsonArray>();
-        USE_SERIAL.printf("Found %d activities:\n\n", activities.size());
-
-        int count = 0;
-        for (JsonObject activity : activities) {
-          count++;
-          USE_SERIAL.printf("Activity #%d:\n", count);
-          USE_SERIAL.printf("  Name: %s\n", activity["name"].as<const char *>());
-          USE_SERIAL.printf("  Type: %s\n", activity["type"].as<const char *>());
-          USE_SERIAL.printf("  Distance: %.2f km\n", activity["distance"].as<float>() / 1000.0);
-          USE_SERIAL.printf("  Moving Time: %d seconds\n", activity["moving_time"].as<int>());
-          USE_SERIAL.printf("  Start Date: %s\n", activity["start_date"].as<const char *>());
-          USE_SERIAL.println();
-        }
+        USE_SERIAL.printf("Found %d activities:\n", activities.size());
+        USE_SERIAL.printf("BYTE SIZE: %d\n\n", doc.memoryUsage());
+        
+        // Parse activity days and display calendar
+        int activityDays[31];  // Max 31 days in a month
+        int activityCount = calendar.parseActivitiesFromJson(activities, activityDays, 31);
+        
+        USE_SERIAL.printf("Activities on %d days\n", activityCount);
+        
+        // Display the calendar
+        calendar.printCalendar(2025, 11, activityDays, activityCount);
+        
       } else {
         USE_SERIAL.printf("[JSON] Parse error: %s\n", error.c_str());
       }

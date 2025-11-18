@@ -1,0 +1,59 @@
+Diagnostics:
+  UnusedIncludes: None
+  Suppress:
+    - pp_file_not_found
+    - ovl_no_viable_member_function_in_call
+
+CompileFlags:
+  Add:
+    # ESP32 Core
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/cores/esp32"
+    # ESP32 Variants
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/variants/nano_nora"
+    # FreeRTOS - CRITICAL for freertos/FreeRTOS.h
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/freertos/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/freertos/port/xtensa/include"
+    # ESP32 SDK Core
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_common/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_hw_support/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_rom/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_system/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_timer/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/soc/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/soc/esp32s3/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/hal/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/hal/esp32s3/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/hal/platform_port/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/log/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/heap/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/newlib/platform_include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/xtensa/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/xtensa/esp32s3/include"
+    # WiFi and Networking
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_wifi/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_netif/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_event/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/lwip/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/lwip/lwip/src/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/lwip/port/esp32/include"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/tools/sdk/esp32s3/include/esp_http_client/include"
+    # Core libraries (WiFi, HTTPClient, etc.)
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/libraries/WiFi/src"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/libraries/HTTPClient/src"
+    - "-I/home/mckusa/.arduino15/packages/arduino/hardware/esp32/2.0.18-arduino.5/libraries/WiFiClientSecure/src"
+    # ArduinoJson
+    - "-I/home/mckusa/Arduino/libraries/ArduinoJson/src"
+    # Project source
+    - "-I/home/mckusa/Code/matrix-miles/esp32_client_cpp"
+    # Compiler defines
+    - "-DARDUINO=10816"
+    - "-DARDUINO_NANO_ESP32"
+    - "-DARDUINO_ARCH_ESP32"
+    - "-DESP32"
+    - "-DCORE_DEBUG_LEVEL=0"
+    # C++ standard
+    - "-std=gnu++11"
+  Remove:
+    # Remove problematic flags that clangd doesn't understand
+    - "-fno-rtti"
+    - "-mlongcalls"

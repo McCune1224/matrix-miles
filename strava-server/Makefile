@@ -1,4 +1,4 @@
-.PHONY: help build run test clean docker-build docker-run docker-up docker-down test-api test-health dev
+.PHONY: help build run test clean docker-build docker-run docker-up docker-down test-api test-health dev fmt vet prep
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -88,6 +88,41 @@ deps: ## Download Go dependencies
 
 lint: ## Run linter (requires golangci-lint)
 	golangci-lint run
+
+fmt: ## Format Go code
+	go fmt ./...
+	gofmt -s -w .
+
+vet: ## Run go vet
+	go vet ./...
+
+prep: ## Prepare code for commit (format, lint, generate, test)
+	@echo "🔧 Formatting code..."
+	@go fmt ./...
+	@gofmt -s -w .
+	@echo "✅ Code formatted"
+	@echo ""
+	@echo "🔍 Running go vet..."
+	@go vet ./...
+	@echo "✅ Vet passed"
+	@echo ""
+	@echo "🔨 Generating sqlc code..."
+	@sqlc generate
+	@echo "✅ SQLC generated"
+	@echo ""
+	@echo "🧹 Tidying dependencies..."
+	@go mod tidy
+	@echo "✅ Dependencies tidied"
+	@echo ""
+	@echo "🔍 Running linter..."
+	@golangci-lint run
+	@echo "✅ Linter passed"
+	@echo ""
+	@echo "🧪 Running tests..."
+	@go test -v ./...
+	@echo "✅ Tests passed"
+	@echo ""
+	@echo "🎉 All checks passed! Ready to commit and push."
 
 # Railway
 railway-logs: ## View Railway logs (requires Railway CLI)
