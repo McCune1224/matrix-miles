@@ -1,8 +1,8 @@
-# ESP32 Production Configuration Guide
+# MatrixPortal M4 Production Configuration Guide
 
 ## Quick Setup
 
-After deploying your strava-server to Railway, update your ESP32 code with these values:
+After deploying your strava-server to Railway, update your MatrixPortal M4 code with these values:
 
 ### 1. Update blink.ino
 
@@ -191,9 +191,9 @@ curl -H "X-API-Key: your_api_key" \
 - [ ] Update Strava API callback URL
 - [ ] Test OAuth flow and get User ID
 - [ ] Generate and set API key
-- [ ] Update ESP32 code with production URL and API key
+- [ ] Update MatrixPortal M4 code with production URL and API key
 - [ ] Test API endpoints with curl
-- [ ] Flash ESP32 with production code
+- [ ] Flash MatrixPortal M4 with production code
 - [ ] Monitor Railway logs for requests
 
 ## Security Reminders
@@ -209,4 +209,4 @@ curl -H "X-API-Key: your_api_key" \
 - Railway Dashboard: https://railway.app/dashboard
 - Railway Logs: Check "View Logs" in deployment
 - Strava API Status: https://status.strava.com
-- ESP32 Serial Monitor: Monitor output at 115200 baud
+- MatrixPortal M4 Serial Monitor: Monitor output at 115200 baud

@@ -18,7 +18,7 @@ const char* WIFI_PASSWORD = "your_wifi_password_here";
 #if USE_PRODUCTION
 const char* SERVER_BASE_URL = "https://matrix-miles-production.up.railway.app";
 #else
-const char* SERVER_BASE_URL = "https://your-test-server.com";
+const char* SERVER_BASE_URL = "http://your-test-server.com";
 #endif
 
 // User ID for API requests

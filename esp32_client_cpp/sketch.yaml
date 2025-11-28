@@ -1,2 +1,2 @@
-default_fqbn: arduino:esp32:nano_nora
+default_fqbn: adafruit:samd:adafruit_matrixportal_m4
 default_port: /dev/ttyACM0

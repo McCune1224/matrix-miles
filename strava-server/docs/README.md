@@ -1,6 +1,6 @@
 # Strava OAuth Server
 
-A Go HTTP server using Echo framework that handles Strava OAuth authentication, manages user tokens, and provides a REST API for ESP32 devices to fetch activity data.
+A Go HTTP server using Echo framework that handles Strava OAuth authentication, manages user tokens, and provides a REST API for MatrixPortal M4 devices to fetch activity data.
 
 ## Features
 
@@ -398,7 +398,7 @@ Ensure `STRAVA_REDIRECT_URI` in `.env` exactly matches the redirect URI in your 
 ### API Key Authentication Failed
 
 Verify:
-- API key in `.env` matches the key used in ESP32 config
+- API key in `.env` matches the key used in MatrixPortal M4 config
 - Header name is `X-API-Key` (case-sensitive)
 - Key is sent with every API request
 

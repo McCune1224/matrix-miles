@@ -1,10 +1,10 @@
-# ESP32 Strava Activity Fetcher
+# MatrixPortal M4 Strava Activity Fetcher
 
 Fetches Strava activities from the server every 5 minutes and outputs JSON to serial.
 
 ## Tech Stack
 
-- ESP32 microcontroller
+- Adafruit MatrixPortal M4 microcontroller
 - Arduino C++
 - HTTPClient for REST API calls
 - ArduinoJson for parsing (optional)
@@ -39,7 +39,7 @@ Install via Arduino IDE Library Manager:
 ### 3. Upload to ESP32
 
 1. Open `blink.ino` in Arduino IDE
-2. Select ESP32 board (Tools → Board → ESP32 Dev Module)
+2. Select Adafruit MatrixPortal M4 board (Tools → Board → Adafruit MatrixPortal M4)
 3. Select COM port (Tools → Port)
 4. Click Upload
 
@@ -94,7 +94,7 @@ Do not commit `config.h` - it contains WiFi credentials and API keys. The file i
 
 ## Troubleshooting
 
-**WiFi connection fails:** Check SSID/password, ensure 2.4GHz network (ESP32 doesn't support 5GHz)
+**WiFi connection fails:** Check SSID/password, ensure 2.4GHz network (MatrixPortal M4 doesn't support 5GHz)
 
 **HTTP 401:** Verify API key matches server configuration
 

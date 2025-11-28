@@ -157,7 +157,7 @@ Expected response:
 1. Visit: `https://your-app-name.up.railway.app/auth/login`
 2. Authorize with Strava
 3. Note your User ID from the success message
-4. Use this User ID in your ESP32 configuration
+4. Use this User ID in your MatrixPortal M4 configuration
 
 ### 9. Sync Your Activities
 
@@ -346,4 +346,4 @@ Estimated monthly cost:
 2. ✅ Configure automatic backups for PostgreSQL
 3. ✅ Add rate limiting for production
 4. ✅ Set up custom domain (optional)
-5. ✅ Configure ESP32 with production URL and API key
+5. ✅ Configure MatrixPortal M4 with production URL and API key

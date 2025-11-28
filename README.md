@@ -1,10 +1,10 @@
 # Matrix Miles
 
-IoT Project to get Strava's running activity tracking system that bridges fitness data with embedded hardware. This project includes a Go web server to handle API / Oauth Logic with Strava that communicates with an ESP32 client for displaying data on an LED Matrix (calendar view, monthly / weekly stats, best preformances, etc).
+IoT Project to get Strava's running activity tracking system that bridges fitness data with embedded hardware. This project includes a Go web server to handle API / Oauth Logic with Strava that communicates with a MatrixPortal M4 client for displaying data on an LED Matrix (calendar view, monthly / weekly stats, best preformances, etc).
 
 ## Overview
 
-Matrix Miles combines a Go backend with an ESP32 based client to collect, process, and visualize Strava activity data in an embedded environment.
+Matrix Miles combines a Go backend with a MatrixPortal M4 based client to collect, process, and visualize Strava activity data in an embedded environment.
 
 ## Architecture
 
@@ -14,7 +14,7 @@ Matrix Miles combines a Go backend with an ESP32 based client to collect, proces
   - REST API with API key authentication for IoT devices
   - Structured logging with rotation and an admin log viewer
   - Production deployment on Railway with Docker
-- **Embedded Client (C++ for ESP32)**
+- **Embedded Client (C++ for MatrixPortal M4)**
   - WiFi connectivity with automatic reconnection
   - HTTP client for secure API communication
   - JSON parsing for activity and calendar data
@@ -52,7 +52,7 @@ matrix-miles/
 - Database schema with proper indexing and constraints
 - API security with API key authentication
 - Structured logging with admin interface
-- Working ESP32 HTTP client with JSON parsing
+- Working MatrixPortal M4 HTTP client with JSON parsing
 - Docker containerization and Railway deployment
 
 **Next Goals**
@@ -76,7 +76,7 @@ matrix-miles/
 ## Technology Stack
 
 - Backend: Go 1.25, Echo framework, PostgreSQL, pgx, sqlc, zap logging
-- Embedded: Arduino C/C++, ESP32 WiFi, HTTPClient, ArduinoJson
+- Embedded: Arduino C/C++, MatrixPortal M4 WiFi, HTTPClient, ArduinoJson
 - Infrastructure: Docker, Railway.app, GitHub Actions
 
 ## Contributing

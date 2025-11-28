@@ -1,4 +1,4 @@
-FQBN = arduino:esp32:nano_nora
+FQBN = adafruit:samd:adafruit_matrixportal_m4
 PORT = /dev/ttyACM0
 compile:
 	arduino-cli compile --fqbn $(FQBN) .
