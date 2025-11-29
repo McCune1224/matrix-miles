@@ -4,11 +4,11 @@ Fetches Strava activities from the server every 5 minutes and outputs JSON to se
 
 ## Tech Stack
 
-- Adafruit MatrixPortal M4 microcontroller
-- Arduino C++
-- HTTPClient for REST API calls
-- ArduinoJson for parsing (optional)
-- WiFi connection via WiFiMulti
+- **Adafruit MatrixPortal M4** microcontroller with integrated ESP32 WiFi co-processor
+- **Arduino C++** with ESP32 core
+- **Adafruit_MQTT** or **HTTPClient** for REST API calls (HTTPClient for HTTPS with TLS)
+- **ArduinoJson** (v6.x or later) for JSON parsing
+- **WiFi** + **WiFiMulti** (ESP32 native) for robust WiFi connectivity
 
 ## Setup
 
@@ -32,9 +32,18 @@ const char* WIFI_PASSWORD = "your_wifi_password";
 
 ### 2. Install Required Libraries
 
-Install via Arduino IDE Library Manager:
+Install via Arduino IDE Library Manager (**Sketch → Include Library → Manage Libraries**):
 
-- ArduinoJson (version 6.x)
+**Required:**
+- **ArduinoJson** (v6.x or later) - JSON parsing
+- **HTTPClient** (included with ESP32 core) - HTTPS requests with TLS/SSL support
+
+**Recommended (Adafruit ecosystem):**
+- **Adafruit Protomatter** - RGB matrix display control
+- **Adafruit_Sensor** - Sensor abstraction layer
+- **Adafruit_LIS3DH** - Accelerometer (optional, for gesture detection)
+
+**Note:** The ESP32 core includes WiFi, WiFiMulti, and HTTPClient libraries natively. HTTPClient supports HTTPS with certificate validation for secure API communication.
 
 ### 3. Upload to ESP32
 
@@ -92,15 +101,103 @@ Switch between production and test servers in `config.h`:
 
 Do not commit `config.h` - it contains WiFi credentials and API keys. The file is already in `.gitignore`.
 
+## WiFi & Networking Best Practices
+
+### Library Selection
+
+For the MatrixPortal M4, use **ESP32 native libraries** (included with Arduino ESP32 core):
+
+- **WiFi.h** + **WiFiMulti.h** - Robust connection management
+- **HTTPClient.h** - Built-in HTTPS/TLS support (preferred for API calls)
+
+### WiFi Connection Pattern
+
+```cpp
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include <HTTPClient.h>
+
+WiFiMulti wifiMulti;
+
+void setup() {
+  // Add multiple APs for fallback
+  wifiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
+  
+  // Non-blocking connection with timeout
+  int attempts = 0;
+  while (wifiMulti.run() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    attempts++;
+  }
+  
+  if (WiFi.isConnected()) {
+    Serial.print("Connected to: ");
+    Serial.println(WiFi.SSID());
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+  }
+}
+
+void loop() {
+  // Reconnect if disconnected
+  if (wifiMulti.run() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected!");
+    return;
+  }
+  
+  // Make HTTPS request
+  HTTPClient http;
+  http.begin(url);
+  http.addHeader("X-API-Key", ESP32_API_KEY);
+  
+  int responseCode = http.GET();
+  if (responseCode == 200) {
+    String payload = http.getString();
+    // Process payload
+  }
+  http.end();
+}
+```
+
+### TLS/Certificate Handling
+
+HTTPClient supports certificate validation for HTTPS. For production use:
+
+```cpp
+// With certificate fingerprint (for Railway or other providers)
+http.begin(url, "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD");
+
+// Or skip validation (NOT recommended for production)
+// http.setInsecure();
+```
+
+
+
 ## Troubleshooting
 
-**WiFi connection fails:** Check SSID/password, ensure 2.4GHz network (MatrixPortal M4 doesn't support 5GHz)
+**WiFi connection fails:** 
+- Check SSID/password are correct
+- Ensure 2.4GHz network (MatrixPortal M4 ESP32 doesn't support 5GHz)
+- Use WiFiMulti for fallback AP support
+- Verify WiFi signal strength (RSSI) with `WiFi.RSSI()`
 
-**HTTP 401:** Verify API key matches server configuration
+**HTTPS/TLS certificate errors:** 
+- HTTPClient supports TLS/SSL with certificate validation
+- For production servers, ensure certificates are valid
+- Use `https://` URLs with HTTPClient for encrypted communication
 
-**HTTP 404:** Check user ID exists in database
+**HTTP 401 (Unauthorized):** 
+- Verify API key matches server configuration
+- Confirm custom headers are being sent correctly with `setAuthorization()` or custom header methods
 
-**JSON parse error:** Install ArduinoJson 6.x, increase `DynamicJsonDocument` size if needed
+**HTTP 404 (Not Found):** 
+- Check user ID exists in database
+- Verify URL formatting and endpoint paths
+
+**JSON parse error:** 
+- Install ArduinoJson 6.x (or later)
+- Increase `DynamicJsonDocument` size if response is large
+- Check response is valid JSON with serial debugging
 
 ## API
 

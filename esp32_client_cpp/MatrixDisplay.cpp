@@ -36,6 +36,10 @@ void loadingAnimation() {
 }
 
 void displayCalendar() {
+  displayCalendarWithMonth(11, 2024);  // Default to current month (update this)
+}
+
+void displayCalendarWithMonth(int month, int year) {
   matrix.fillScreen(0);  // Clear screen to black
 
   // Use default font (5x7)
@@ -43,26 +47,35 @@ void displayCalendar() {
   matrix.setTextSize(1);
   matrix.setTextColor(matrix.color565(255, 255, 255));  // White text
 
+  // Month names abbreviated (3 chars max)
+  const char* monthNames[] = {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
   // Layout: 32 pixels height
-  // Header: 6 pixels
-  // Calendar: 3 rows x 7 cols, 7 pixels each = 21 pixels
-  // Stats: 5 pixels at bottom
+  // Header: 2 rows (month/year + day names) = 14 pixels
+  // Calendar: 3 rows x 7 cols, 6 pixels each = 18 pixels
+  // Total: 32 pixels
 
-  int headerHeight = 6;
+  int headerHeight = 14;
   int calendarRows = 3;
-  int calendarHeight = 7;  // 3x7=21
-  int cellWidth = MATRIX_WIDTH / 7;  // 9 pixels
-  int statsHeight = MATRIX_HEIGHT - headerHeight - calendarRows * calendarHeight;  // 32-6-21=5
+  int calendarHeight = 6;
+  int cellWidth = MATRIX_WIDTH / 7;  // ~9 pixels
 
-  // Draw header: Days of week
-  const char* days[] = {"M", "T", "W", "T", "F", "S", "S"};
+  // Draw month/year header
+  matrix.setTextSize(1);
+  matrix.setCursor(0, 0);
+  char monthYearStr[12];
+  sprintf(monthYearStr, "%s %d", monthNames[month], year);
+  matrix.print(monthYearStr);
+
+  // Draw day of week abbreviations
+  const char* dayNames[] = {"M", "T", "W", "T", "F", "S", "S"};
   for (int i = 0; i < 7; i++) {
-    int x = i * cellWidth + 2;  // Center in cell
-    matrix.setCursor(x, 0);
-    matrix.print(days[i]);
+    int x = i * cellWidth + 2;
+    matrix.setCursor(x, 8);
+    matrix.print(dayNames[i]);
   }
 
-  // Draw calendar grid (3 rows for days 1-21)
+  // Draw calendar grid
   for (int week = 0; week < calendarRows; week++) {
     for (int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
       int day = week * 7 + dayOfWeek + 1;
@@ -74,7 +87,7 @@ void displayCalendar() {
       // Check if this day has activity
       bool hasActivity = false;
       for (int i = 0; i < activityCount; i++) {
-        if (activityDays[i] == day) {
+        if (activityDays[i].day == day) {
           hasActivity = true;
           break;
         }
@@ -82,21 +95,14 @@ void displayCalendar() {
 
       // Draw smaller squares
       if (hasActivity) {
-        matrix.fillRect(x + 2, y + 2, cellWidth - 4, calendarHeight - 4, matrix.color565(255, 255, 255));  // White fill, smaller
+        // White fill for days with activity
+        matrix.fillRect(x + 1, y + 1, cellWidth - 2, calendarHeight - 2, matrix.color565(255, 255, 255));
       } else {
-        // Draw border for days not ran
-        matrix.drawRect(x + 2, y + 2, cellWidth - 4, calendarHeight - 4, matrix.color565(128, 128, 128));  // Gray border, smaller
+        // Gray border for days without activity
+        matrix.drawRect(x + 1, y + 1, cellWidth - 2, calendarHeight - 2, matrix.color565(80, 80, 80));
       }
     }
   }
-
-  // Draw hard line between calendar and stats
-  int lineY = headerHeight + calendarRows * calendarHeight;
-  matrix.drawFastHLine(0, lineY - 1, MATRIX_WIDTH, matrix.color565(255, 255, 255));  // White line above stats
-
-  // Draw stats area (placeholder)
-  matrix.setCursor(0, lineY);
-  matrix.print("Stats");
 
   matrix.show();
 }
