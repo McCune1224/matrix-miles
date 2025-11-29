@@ -12,6 +12,24 @@ This guide walks you through setting up CircuitPython on your MatrixPortal M4 an
 - WiFi network (2.4GHz, not 5GHz)
 - Your Matrix Miles backend running and accessible
 - API key from your backend
+- `make` command available (for convenience) - optional but recommended
+
+## 🚀 Quick Start (with Make)
+
+If you have `make` installed:
+
+```bash
+# One-time setup
+make config          # Creates secrets.py from template
+
+# Upload code
+make upload          # Copy files to device
+
+# Monitor
+make serial          # View real-time output (Ctrl+A then Ctrl+X to exit)
+```
+
+For detailed manual instructions, continue below.
 
 ## Step 1: Install CircuitPython
 
@@ -140,7 +158,18 @@ CIRCUITPY/
 
 ## Step 5: Monitor and Debug
 
-### 5.1 Open Serial Monitor
+### 5.1 Open Serial Monitor (Using Make - Recommended)
+
+If you have `make` installed:
+
+```bash
+make serial          # View live output
+make monitor         # Alias for serial
+make repl            # Interactive REPL
+make debug           # Enable verbose debugging
+```
+
+### 5.2 Open Serial Monitor (Manual)
 
 Connect a serial monitor to see debug output:
 
@@ -155,7 +184,7 @@ screen /dev/tty.usbmodem1 115200
 2. Select your device port
 3. Set baud rate to 115200
 
-### 5.2 Expected Output
+### 5.3 Expected Output
 
 When the device boots, you should see:
 

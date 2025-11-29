@@ -2,6 +2,41 @@
 
 **Copy this after setup to your MatrixPortal for quick reference.**
 
+## Make Commands (Recommended)
+
+Use these `make` commands for common tasks:
+
+```bash
+# View real-time output
+make serial          # Watch serial output (115200 baud)
+make monitor         # Alias for serial
+
+# Upload and manage
+make upload          # Upload code.py and lib/ to device
+make config          # Setup secrets.py from template
+
+# Verification
+make status          # Check device and mount status
+make check           # Verify file structure on device
+make test            # Test API connectivity
+
+# Debugging
+make repl            # Interactive REPL via serial
+make debug           # Debug mode (verbose logging)
+make test-api API_KEY=key USER_ID=1  # Test API endpoint
+
+# Utilities
+make clean           # Remove local temp files
+make help            # Show all available commands
+```
+
+**Quick workflow:**
+```bash
+make config          # Setup once
+make upload          # After any code changes
+make serial          # Watch in real-time
+```
+
 ## Installation Checklist
 
 - [ ] Download CircuitPython 8.x for MatrixPortal M4
