@@ -8,17 +8,48 @@ StravaClient::StravaClient(const char* apiKey, const char* baseUrl, int userId)
 }
 
 String StravaClient::extractHost(const String& baseUrl) {
-  String host = baseUrl;
-  host.replace("https://", "");
-  host.replace("http://", "");
-  
-  // Find the path part and remove it
-  int slashIndex = host.indexOf('/');
-  if (slashIndex > 0) {
-    host = host.substring(0, slashIndex);
-  }
-  
-  return host;
+   String host = baseUrl;
+   // Remove protocol
+   host.replace("https://", "");
+   host.replace("http://", "");
+   
+   // Remove port if present (e.g., "192.168.68.100:8080/api" -> "192.168.68.100")
+   int colonIndex = host.indexOf(':');
+   if (colonIndex > 0) {
+     host = host.substring(0, colonIndex);
+   }
+   
+   // Remove path if present (shouldn't be any at this point, but just in case)
+   int slashIndex = host.indexOf('/');
+   if (slashIndex > 0) {
+     host = host.substring(0, slashIndex);
+   }
+   
+   return host;
+}
+
+uint16_t StravaClient::extractPort(const String& baseUrl) {
+   String url = baseUrl;
+   // Remove protocol
+   url.replace("https://", "");
+   url.replace("http://", "");
+   
+   // Look for port (e.g., "192.168.68.100:8080/api" -> extract 8080)
+   int colonIndex = url.indexOf(':');
+   if (colonIndex > 0) {
+     // Find the end of the port number (next / or end of string)
+     int slashIndex = url.indexOf('/', colonIndex);
+     String portStr;
+     if (slashIndex > 0) {
+       portStr = url.substring(colonIndex + 1, slashIndex);
+     } else {
+       portStr = url.substring(colonIndex + 1);
+     }
+     return (uint16_t)portStr.toInt();
+   }
+   
+   // No port specified, use default based on protocol
+   return useHTTP ? 80 : 443;
 }
 
 String StravaClient::buildCalendarUrl(int year, int month) {
@@ -34,59 +65,44 @@ int StravaClient::fetchCalendarData(int year, int month, CalendarDay* days, int 
     return 0;
   }
 
-  String path = buildCalendarUrl(year, month);
-  Serial.print("[Strava] Fetching calendar data: ");
-  Serial.println(path);
+   String path = buildCalendarUrl(year, month);
+   Serial.print("[Strava] Fetching calendar data: ");
+   Serial.println(path);
 
-  String host = extractHost(String(BASE_URL));
-  
-  Serial.print("[Strava] Host: ");
-  Serial.println(host);
+   String host = extractHost(String(BASE_URL));
+   uint16_t port = extractPort(String(BASE_URL));
+   
+   Serial.print("[Strava] Host: ");
+   Serial.println(host);
+   Serial.print("[Strava] Port: ");
+   Serial.println(port);
 
-  // Determine protocol
-  Serial.print("[Strava] Using ");
-  if (useHTTP) {
-    Serial.println("HTTP on port 80");
-  } else {
-    Serial.println("HTTPS on port 443");
-  }
-  
-  uint16_t port = useHTTP ? 80 : 443;
-
-  // Connect to host
-  Serial.print("[Strava] Attempting connection to ");
-  Serial.print(host.c_str());
-  Serial.print(":");
-  Serial.println(port);
-  
-  unsigned long connectStart = millis();
-  
-  WiFiClient client;
-  bool connected = false;
-  
-  if (useHTTP) {
-    // Use plain HTTP
-    connected = client.connect(host.c_str(), port);
-  } else {
-    // Use HTTPS with BearSSL
-    connected = client.connectSSL(host.c_str(), port);
-    
-    // Try HTTP fallback if HTTPS failed
-    if (!connected) {
-      Serial.println("[Strava] HTTPS failed, attempting HTTP fallback...");
-      WiFiClient httpFallback;
-      if (httpFallback.connect(host.c_str(), 80)) {
-        unsigned long fallbackTime = millis() - connectStart;
-        Serial.print("[Strava] ✓ HTTP fallback succeeded in ");
-        Serial.print(fallbackTime);
-        Serial.println("ms");
-        client = httpFallback;
-        connected = true;
-      } else {
-        Serial.println("[Strava] HTTP fallback also failed");
-      }
+    // Determine protocol
+    Serial.print("[Strava] Using ");
+    if (useHTTP) {
+      Serial.println("HTTP");
+    } else {
+      Serial.println("HTTPS");
     }
-  }
+
+    // Connect to host
+    Serial.print("[Strava] Attempting connection to ");
+    Serial.print(host.c_str());
+    Serial.print(":");
+    Serial.println(port);
+   
+   unsigned long connectStart = millis();
+   
+   WiFiClient client;
+   bool connected = false;
+   
+   if (useHTTP) {
+     // Use plain HTTP
+     connected = client.connect(host.c_str(), port);
+   } else {
+     // Use HTTPS with BearSSL
+     connected = client.connectSSL(host.c_str(), port);
+   }
   
   if (!connected) {
     unsigned long connectTime = millis() - connectStart;
@@ -259,97 +275,103 @@ int StravaClient::parseCalendarResponse(const String& response, CalendarDay* day
 }
 
 void StravaClient::testConnection() {
-  Serial.println("\n[Strava] === Testing Base URL Connection ===");
-  
-  String host = extractHost(String(BASE_URL));
-
-  Serial.print("[Strava] Base URL: ");
-  Serial.println(BASE_URL);
-  Serial.print("[Strava] Host: ");
-  Serial.println(host);
-
-  // Test HTTPS first (preferred)
-  Serial.print("[Strava] Attempting HTTPS connection to ");
-  Serial.print(host.c_str());
-  Serial.println(":443");
-  
-  unsigned long connectStart = millis();
-  WiFiClient httpsClient;
-  if (httpsClient.connectSSL(host.c_str(), 443)) {
-    unsigned long connectTime = millis() - connectStart;
-    Serial.print("[Strava] ✓ HTTPS connection succeeded in ");
-    Serial.print(connectTime);
-    Serial.println("ms");
-    httpsClient.stop();
-  } else {
-    unsigned long connectTime = millis() - connectStart;
-    Serial.print("[Strava] ✗ HTTPS connection failed after ");
-    Serial.print(connectTime);
-    Serial.println("ms");
-    Serial.println("[Strava] → Attempting HTTP fallback...");
+    Serial.println("\n[Strava] === Testing Base URL Connection ===");
     
-    // Try HTTP fallback
-    Serial.print("[Strava] Retrying with HTTP on port 80...");
-    connectStart = millis();
-    WiFiClient httpClient;
-    if (httpClient.connect(host.c_str(), 80)) {
-      connectTime = millis() - connectStart;
-      Serial.print("\n[Strava] ✓ HTTP connection succeeded in ");
-      Serial.print(connectTime);
-      Serial.println("ms");
-      httpClient.stop();
-    } else {
-      connectTime = millis() - connectStart;
-      Serial.print("\n[Strava] ✗ HTTP also failed after ");
-      Serial.print(connectTime);
-      Serial.println("ms");
-    }
-    return;
-  }
-  
-  // If HTTPS succeeded, try a health check request
-  Serial.println("[Strava] Attempting HTTPS health check request...");
-  connectStart = millis();
-  WiFiClient requestClient;
-  if (!requestClient.connectSSL(host.c_str(), 443)) {
-    Serial.println("[Strava] ✗ Health check connection failed");
-    return;
-  }
-  
-  // Send health check request
-  String request = "GET /health HTTP/1.1\r\n";
-  request += "Host: " + host + "\r\n";
-  request += "Connection: close\r\n";
-  request += "\r\n";
+    String host = extractHost(String(BASE_URL));
+    uint16_t port = extractPort(String(BASE_URL));
 
-  Serial.println("[Strava] === Sending Health Check Request ===");
-  Serial.println(request);
+    Serial.print("[Strava] Base URL: ");
+    Serial.println(BASE_URL);
+    Serial.print("[Strava] Host: ");
+    Serial.println(host);
+    
+    // Determine which port to use
+    Serial.print("[Strava] Protocol: ");
+    Serial.println(useHTTP ? "HTTP" : "HTTPS");
+    Serial.print("[Strava] Port: ");
+    Serial.println(port);
 
-  // Send request
-  size_t sent = requestClient.print(request);
-  Serial.print("[Strava] Bytes sent: ");
-  Serial.println(sent);
+   // Test connection
+   Serial.print("[Strava] Attempting connection to ");
+   Serial.print(host.c_str());
+   Serial.print(":");
+   Serial.println(port);
+   
+   unsigned long connectStart = millis();
+   WiFiClient client;
+   bool connected = false;
+   
+   if (useHTTP) {
+     connected = client.connect(host.c_str(), port);
+   } else {
+     connected = client.connectSSL(host.c_str(), port);
+   }
+   
+   if (connected) {
+     unsigned long connectTime = millis() - connectStart;
+     Serial.print("[Strava] ✓ Connection succeeded in ");
+     Serial.print(connectTime);
+     Serial.println("ms");
+     client.stop();
+   } else {
+     unsigned long connectTime = millis() - connectStart;
+     Serial.print("[Strava] ✗ Connection failed after ");
+     Serial.print(connectTime);
+     Serial.println("ms");
+     return;
+   }
+   
+   // Try a health check request
+   Serial.println("[Strava] Attempting health check request...");
+   connectStart = millis();
+   WiFiClient requestClient;
+   
+   if (useHTTP) {
+     if (!requestClient.connect(host.c_str(), port)) {
+       Serial.println("[Strava] ✗ Health check connection failed");
+       return;
+     }
+   } else {
+     if (!requestClient.connectSSL(host.c_str(), port)) {
+       Serial.println("[Strava] ✗ Health check connection failed");
+       return;
+     }
+   }
+   
+   // Send health check request
+   String request = "GET /health HTTP/1.1\r\n";
+   request += "Host: " + host + "\r\n";
+   request += "Connection: close\r\n";
+   request += "\r\n";
 
-  // Wait a bit for response
-  delay(500);
+   Serial.println("[Strava] === Sending Health Check Request ===");
+   Serial.println(request);
 
-  // Read and log response data
-  Serial.println("[Strava] === HTTPS Response ===");
-  unsigned long bytesRead = 0;
-  unsigned long timeout = millis() + 5000;
-  
-  while (requestClient.available() && millis() < timeout) {
-    String line = requestClient.readStringUntil('\n');
-    Serial.println(line);
-    bytesRead += line.length() + 1;
-  }
-  
-  Serial.print("[Strava] Total bytes received: ");
-  Serial.println(bytesRead);
-  
-  requestClient.stop();
-  
-   Serial.println("[Strava] === End Test ===\n");
+   // Send request
+   size_t sent = requestClient.print(request);
+   Serial.print("[Strava] Bytes sent: ");
+   Serial.println(sent);
+
+   // Wait a bit for response
+   delay(500);
+
+   // Read and log response data
+   Serial.println("[Strava] === Response ===");
+   unsigned long bytesRead = 0;
+   unsigned long timeout = millis() + 5000;
+   
+   while (requestClient.available() && millis() < timeout) {
+     String line = requestClient.readStringUntil('\n');
+     Serial.println(line);
+     bytesRead += line.length() + 1;
+   }
+   
+   Serial.print("[Strava] Total bytes received: ");
+   Serial.println(bytesRead);
+   
+   requestClient.stop();
+   
+    Serial.println("[Strava] === End Test ===\n");
 }
 
 bool StravaClient::connectWithSSL(const String& host, uint16_t port) {
@@ -430,81 +452,221 @@ bool StravaClient::parseHTTPDate(const String& dateHeader) {
     return false;
   }
   
-  // TODO: Actually set the system time
-  // WiFi NINA doesn't have a built-in RTC setter
-  // This would require:
-  // 1. Modifying the device time via a custom implementation
-  // 2. Using Arduino's internal timer
-  // 3. Custom RTC module integration
-  
-  Serial.print("[Strava] Parsed time from server: ");
-  Serial.print(day);
-  Serial.print("/");
-  Serial.print(monthNum);
-  Serial.print("/");
-  Serial.print(year);
-  Serial.print(" ");
-  Serial.print(hour);
-  Serial.print(":");
-  Serial.print(minute);
-  Serial.print(":");
-  Serial.println(second);
-  
-  return true;
+   // TODO: Actually set the system time
+   // WiFi NINA doesn't have a built-in RTC setter
+   // This would require:
+   // 1. Modifying the device time via a custom implementation
+   // 2. Using Arduino's internal timer
+   // 3. Custom RTC module integration
+   
+   // Store the synced date for later retrieval
+   syncedDay = day;
+   syncedMonth = monthNum;
+   syncedYear = year;
+
+   Serial.print("[Strava] Parsed time from server: ");
+   Serial.print(day);
+   Serial.print("/");
+   Serial.print(monthNum);
+   Serial.print("/");
+   Serial.print(year);
+   Serial.print(" ");
+   Serial.print(hour);
+   Serial.print(":");
+   Serial.print(minute);
+   Serial.print(":");
+   Serial.println(second);
+   
+   return true;
 }
 
 bool StravaClient::syncTimeFromServer() {
-  Serial.println("[Strava] === Syncing Time from Server ===");
-  
-  String host = extractHost(String(BASE_URL));
-  uint16_t port = useHTTP ? 80 : 443;
-  
-  WiFiClient client;
-  if (!client.connect(host.c_str(), port)) {
-    Serial.println("[Strava] Time sync: Connection failed");
-    return false;
-  }
-  
-  Serial.println("[Strava] Connected to server for time sync");
-  
-  // Send simple HEAD request to /health to get date headers
-  String request = "HEAD /health HTTP/1.1\r\n";
-  request += "Host: " + host + "\r\n";
-  request += "Connection: close\r\n";
-  request += "\r\n";
-  
-  client.print(request);
-  
-  // Read response headers looking for Date
-  String dateHeader = "";
-  bool foundDate = false;
-  
-  while (client.available()) {
-    String line = client.readStringUntil('\n');
+    Serial.println("[Strava] === Syncing Time from Server ===");
     
-    // Remove trailing \r if present
-    if (line.length() > 0 && line[line.length()-1] == '\r') {
-      line = line.substring(0, line.length()-1);
-    }
+    String host = extractHost(String(BASE_URL));
+    uint16_t port = extractPort(String(BASE_URL));
     
-    // Look for Date header
-    if (line.startsWith("Date:")) {
-      dateHeader = line.substring(6);  // Skip "Date: "
-      dateHeader.trim();
-      foundDate = true;
-      break;
+    WiFiClient client;
+    if (!client.connect(host.c_str(), port)) {
+      Serial.println("[Strava] Time sync: Connection failed");
+      return false;
     }
-  }
-  
-  client.stop();
-  
-  if (!foundDate) {
-    Serial.println("[Strava] Time sync: No Date header found");
-    return false;
-  }
-  
-  Serial.print("[Strava] Found Date header: ");
-  Serial.println(dateHeader);
-  
-  return parseHTTPDate(dateHeader);
+   
+   Serial.println("[Strava] Connected to server for time sync");
+   
+   // Send GET request to /health to get server time
+   String request = "GET /health HTTP/1.1\r\n";
+   request += "Host: " + host + "\r\n";
+   request += "Connection: close\r\n";
+   request += "\r\n";
+   
+   client.print(request);
+   
+   // Read status line
+   String statusLine = client.readStringUntil('\n');
+   int statusCode = 0;
+   if (statusLine.startsWith("HTTP/1.")) {
+     statusCode = statusLine.substring(9, 12).toInt();
+   }
+   
+   if (statusCode != 200) {
+     Serial.print("[Strava] Time sync: Non-200 response (");
+     Serial.print(statusCode);
+     Serial.println(")");
+     client.stop();
+     return false;
+   }
+   
+   // Skip headers until we find empty line
+   String line;
+   while (client.available()) {
+     line = client.readStringUntil('\n');
+     if (line == "\r") {
+       break;
+     }
+   }
+   
+   // Read response body
+   String response = "";
+   while (client.available()) {
+     response += client.readString();
+   }
+   
+   client.stop();
+   
+   Serial.print("[Strava] Health response: ");
+   Serial.println(response);
+   
+   // Parse JSON response to extract time
+   // Format: {"status":"ok","time":"2025-11-30T10:30:45.123456Z"}
+   int timeStart = response.indexOf("\"time\":\"");
+   if (timeStart == -1) {
+     Serial.println("[Strava] Time sync: No time field in JSON");
+     return false;
+   }
+   
+   timeStart += 8;  // Skip past "\"time\":\""
+   int timeEnd = response.indexOf("\"", timeStart);
+   if (timeEnd == -1) {
+     Serial.println("[Strava] Time sync: Could not parse time field");
+     return false;
+   }
+   
+   String timeStr = response.substring(timeStart, timeEnd);
+   Serial.print("[Strava] Extracted time string: ");
+   Serial.println(timeStr);
+   
+   // Parse RFC3339 format: "2025-11-30T10:30:45.123456Z"
+   // Extract: YYYY-MM-DDTHH:MM:SS.xxxZ
+   int year, month, day, hour, minute, second;
+   int parsed = sscanf(timeStr.c_str(), "%d-%d-%dT%d:%d:%d",
+                       &year, &month, &day, &hour, &minute, &second);
+   
+   if (parsed != 6) {
+     Serial.println("[Strava] Time sync: Could not parse RFC3339 date");
+     return false;
+   }
+   
+   // Store the synced date
+   syncedDay = day;
+   syncedMonth = month;
+   syncedYear = year;
+   
+   Serial.print("[Strava] Synced time from server: ");
+   Serial.print(day);
+   Serial.print("/");
+   Serial.print(month);
+   Serial.print("/");
+   Serial.print(year);
+   Serial.print(" ");
+   Serial.print(hour);
+   Serial.print(":");
+   Serial.print(minute);
+   Serial.print(":");
+   Serial.println(second);
+   
+   return true;
+}
+
+void StravaClient::getSyncedDate(int& day, int& month, int& year) {
+   day = syncedDay;
+   month = syncedMonth;
+   year = syncedYear;
+}
+
+bool StravaClient::syncActivitiesWithServer() {
+   Serial.println("[Strava] === Syncing Activities with Server ===");
+   
+   String host = extractHost(String(BASE_URL));
+   uint16_t port = extractPort(String(BASE_URL));
+   
+   WiFiClient client;
+   if (!client.connect(host.c_str(), port)) {
+     Serial.println("[Strava] Activity sync: Connection failed");
+     return false;
+   }
+   
+   Serial.println("[Strava] Connected to server for activity sync");
+   
+   // Build the sync endpoint path
+   String path = "/api/sync/" + String(USER_ID);
+   
+   // Send POST request to sync activities
+   String request = "POST " + path + " HTTP/1.1\r\n";
+   request += "Host: " + host + "\r\n";
+   request += "X-API-Key: " + String(API_KEY) + "\r\n";
+   request += "Content-Length: 0\r\n";
+   request += "Connection: close\r\n";
+   request += "\r\n";
+   
+   Serial.print("[Strava] Sending sync request to: ");
+   Serial.println(path);
+   
+   size_t sent = client.print(request);
+   if (sent == 0) {
+     Serial.println("[Strava] ERROR: Failed to send sync request");
+     client.stop();
+     return false;
+   }
+   
+   Serial.print("[Strava] Bytes sent: ");
+   Serial.println(sent);
+   
+   // Read status line
+   String statusLine = client.readStringUntil('\n');
+   int statusCode = 0;
+   if (statusLine.startsWith("HTTP/1.")) {
+     statusCode = statusLine.substring(9, 12).toInt();
+   }
+   
+   Serial.print("[Strava] Response code: ");
+   Serial.println(statusCode);
+   
+   // Skip headers
+   String line;
+   while (client.available()) {
+     line = client.readStringUntil('\n');
+     if (line == "\r") {
+       break;
+     }
+   }
+   
+   // Read response body
+   String response = "";
+   while (client.available()) {
+     response += client.readString();
+   }
+   
+   client.stop();
+   
+   if (statusCode == 200 || statusCode == 201) {
+     Serial.println("[Strava] Activity sync completed successfully");
+     Serial.print("[Strava] Response: ");
+     Serial.println(response.substring(0, (response.length() > 100) ? 100 : response.length()));
+     return true;
+   } else {
+     Serial.print("[Strava] Activity sync failed with status: ");
+     Serial.println(statusCode);
+     return false;
+   }
 }

@@ -17,6 +17,7 @@ extern int activityCount;
 void displayCalendar();
 void displayCalendarWithMonth(int month, int year);
 void transitionToCalendar();
+void animateCalendar();  // Animate green diamonds
 void loadingAnimation();
 void showLoadingStatus(const char* statusMessage);
 

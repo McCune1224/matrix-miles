@@ -37,6 +37,10 @@ StravaClient* stravaClient = nullptr;
 CalendarDay activityDays[31];
 int activityCount = 0;
 
+// Current displayed calendar month/year
+int currentDisplayMonth = 1;
+int currentDisplayYear = 1970;
+
 // Timing for periodic API calls (5 minutes)
 const unsigned long API_FETCH_INTERVAL_MS = 5 * 60 * 1000;
 unsigned long lastApiCallTime = 0;
@@ -87,6 +91,9 @@ void loop() {
   // Maintain WiFi connection
   wifiManager.maintain();
   
+  // Animate the calendar (green diamonds rotate)
+  animateCalendar();
+  
   // Periodically fetch calendar data if WiFi is connected
   if (stravaClient && wifiManager.isConnected()) {
     if (millis() - lastApiCallTime >= API_FETCH_INTERVAL_MS) {
@@ -95,7 +102,7 @@ void loop() {
     }
   }
   
-  delay(1000);
+  delay(50);  // ~20 FPS for smooth animation
 }
 
  void fetchAndDisplayCalendar() {
@@ -119,6 +126,8 @@ void loop() {
     
     if (count > 0) {
       activityCount = count;
+      currentDisplayMonth = month;
+      currentDisplayYear = year;
       displayCalendarWithMonth(month, year);
       transitionToCalendar();
     }

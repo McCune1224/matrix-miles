@@ -216,6 +216,115 @@ void transitionToCalendar() {
     delay(100);
 }
 
+void animateCalendar() {
+    // Animate green activity diamonds by rotating between diamond and square shapes
+    // This runs continuously in the loop for visual flare
+    
+    static unsigned long lastAnimTime = 0;
+    static bool showDiamond = true;
+    
+    // Animate every 500ms (2 FPS alternation between shapes)
+    if (millis() - lastAnimTime < 500) {
+      return;
+    }
+    
+    lastAnimTime = millis();
+    showDiamond = !showDiamond;  // Toggle shape
+    
+    // Only animate if we have activities to show
+    if (activityCount == 0) {
+      return;
+    }
+    
+    // Get current month/year from extern variables
+    extern int currentDisplayMonth;
+    extern int currentDisplayYear;
+    
+    if (currentDisplayYear <= 1970) {
+      return;  // No valid calendar displayed yet
+    }
+    
+    // Colors
+    uint16_t white = matrix.color565(255, 255, 255);
+    uint16_t green = matrix.color565(0, 255, 0);
+    uint16_t black = matrix.color565(0, 0, 0);
+    
+    // Layout calculations (must match displayCalendarWithMonth)
+    int headerHeight = 5;
+    int cellWidth = 9;
+    int cellHeight = 4;
+    int diamondDisplaySize = 3;
+    
+    // Calculate first day of month
+    struct tm timeStruct;
+    memset(&timeStruct, 0, sizeof(struct tm));
+    timeStruct.tm_year = currentDisplayYear - 1900;
+    timeStruct.tm_mon = currentDisplayMonth - 1;
+    timeStruct.tm_mday = 1;
+    timeStruct.tm_isdst = -1;
+    mktime(&timeStruct);
+    int firstDayOfWeek = timeStruct.tm_wday;
+    
+    // Get days in month
+    int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (currentDisplayMonth == 2 && ((currentDisplayYear % 4 == 0 && currentDisplayYear % 100 != 0) || (currentDisplayYear % 400 == 0))) {
+      daysInMonth[2] = 29;
+    }
+    int numDaysInMonth = daysInMonth[currentDisplayMonth];
+    
+    // Redraw only the green activity diamonds with new shape
+    int dayCounter = 1;
+    
+    for (int week = 0; week < 6; week++) {
+      for (int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+        if (week == 0 && dayOfWeek < firstDayOfWeek) {
+          continue;
+        }
+        
+        if (dayCounter > numDaysInMonth) {
+          break;
+        }
+        
+        // Check if this day has activity
+        bool hasActivity = false;
+        for (int i = 0; i < activityCount; i++) {
+          if (activityDays[i].day == dayCounter) {
+            hasActivity = true;
+            break;
+          }
+        }
+        
+        // Only animate green activity markers
+        if (hasActivity) {
+          int x = dayOfWeek * cellWidth + (cellWidth - diamondDisplaySize) / 2;
+          int y = headerHeight + week * cellHeight + (cellHeight - diamondDisplaySize) / 2;
+          
+          // Clear the 3x3 area first
+          matrix.fillRect(x, y, diamondDisplaySize, diamondDisplaySize, black);
+          
+          if (showDiamond) {
+            // Draw diamond pattern
+            matrix.drawPixel(x + 1, y, green);      // top
+            matrix.drawPixel(x, y + 1, green);      // left
+            matrix.drawPixel(x + 2, y + 1, green);  // right
+            matrix.drawPixel(x + 1, y + 2, green);  // bottom
+          } else {
+            // Draw square pattern (2x2 filled square)
+            matrix.fillRect(x + 0, y + 0, 3, 3, green);
+          }
+        }
+        
+        dayCounter++;
+      }
+      
+      if (dayCounter > numDaysInMonth) {
+        break;
+      }
+    }
+    
+    matrix.show();
+}
+
 void showLoadingStatus(const char* statusMessage) {
      // Smooth rotating square with color gradient and "Loading..." text - ANIMATED!
      static float rotation = 0.0f;
