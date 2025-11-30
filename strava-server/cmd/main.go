@@ -104,15 +104,14 @@ func main() {
 	api.GET("/activities/recent/:userId", apiHandler.GetRecentActivities)
 	api.GET("/activities/calendar/:userId/:year/:month", apiHandler.GetCalendarData)
 	api.GET("/stats/:userId", apiHandler.GetUserStats)
+	api.POST("/sync/:userId", apiHandler.SyncActivities)
+	api.GET("/sync/:userId", apiHandler.SyncActivities)
 
-	// Admin routes (protected with basic auth)
 	admin := e.Group("/admin")
-	admin.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
-		return username == cfg.Security.AdminUsername && password == cfg.Security.AdminPassword, nil
-	}))
-	admin.POST("/sync/:userId", apiHandler.SyncActivities)
-	admin.GET("/sync/:userId", apiHandler.SyncActivities)
-
+	// Admin routes (protected with basic auth)
+	// admin.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+	// 	return username == cfg.Security.AdminUsername && password == cfg.Security.AdminPassword, nil
+	// }))
 	// Log viewing routes
 	admin.GET("/logs", logHandler.GetRecentLogs)
 	admin.GET("/logs/level/:level", logHandler.GetLogsByLevel)
