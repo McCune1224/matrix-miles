@@ -55,6 +55,7 @@ void displayCalendar() {
    }
    
    displayCalendarWithMonth(month, year);
+   transitionToCalendar();
 }
 
 void displayCalendarWithMonth(int month, int year) {
@@ -65,24 +66,80 @@ void displayCalendarWithMonth(int month, int year) {
      uint16_t green = matrix.color565(0, 255, 0);
      
      // Layout calculations
-     int headerHeight = 2;     // Minimal header (just day names)
+     // Display: 64x32 pixels
+     // Header: 5 pixels (4-pixel tall letters + 1 pixel gap)
+     // Calendar: 6 rows for worst case months, (32-5)/6 = ~4.5px per row
+     int headerHeight = 5;     // 4-pixel tall letters + 1 gap
      int cellWidth = 9;        // 64 / 7 ≈ 9 pixels per column
-     int cellHeight = 5;       // (32 - 2) / 6 ≈ 5 pixels per row (more space!)
-     int boxSize = 3;          // Box size: 3x3 pixels
+     int cellHeight = 4;       // (32 - 5) / 6 = ~4.5 pixels per row
+     int diamondSize = 2;      // Diamond: 2x2 pixel core (appears 3x3 rotated)
      
-     // === DRAW HEADER ===
-     matrix.setFont(NULL);
-     matrix.setTextSize(0);    // Smaller font for more space
-     matrix.setTextColor(white);
+     // === DRAW HEADER - CUSTOM 4-PIXEL TALL LETTERS ===
+     // Draw day names manually: S M T W T F S
+     // Each letter is 3-4 pixels wide x 4 pixels tall for better legibility
      
-     // Day names (S M T W T F S) - starts with Sunday
-     const char* dayNames[] = {"S", "M", "T", "W", "T", "F", "S"};
-     for (int i = 0; i < 7; i++) {
-       matrix.setCursor(i * cellWidth + 3, 0);  // Better centering in each column
-       matrix.print(dayNames[i]);
-     }
+     // S (column 0) - more recognizable S shape
+     matrix.drawPixel(3, 0, white);
+     matrix.drawPixel(4, 0, white);
+     matrix.drawPixel(3, 1, white);
+     matrix.drawPixel(4, 2, white);
+     matrix.drawPixel(3, 3, white);
+     matrix.drawPixel(4, 3, white);
      
-     // No separator line - maximizes space for calendar grid
+     // M (column 1) - vertical lines with peak
+     matrix.drawPixel(12, 0, white);
+     matrix.drawPixel(12, 1, white);
+     matrix.drawPixel(12, 2, white);
+     matrix.drawPixel(12, 3, white);
+     matrix.drawPixel(13, 1, white); // peak
+     matrix.drawPixel(14, 0, white);
+     matrix.drawPixel(14, 1, white);
+     matrix.drawPixel(14, 2, white);
+     matrix.drawPixel(14, 3, white);
+     
+     // T (column 2) - clear T shape
+     matrix.drawPixel(21, 0, white);
+     matrix.drawPixel(22, 0, white);
+     matrix.drawPixel(23, 0, white);
+     matrix.drawPixel(22, 1, white);
+     matrix.drawPixel(22, 2, white);
+     matrix.drawPixel(22, 3, white);
+     
+     // W (column 3) - vertical lines with valley
+     matrix.drawPixel(30, 0, white);
+     matrix.drawPixel(30, 1, white);
+     matrix.drawPixel(30, 2, white);
+     matrix.drawPixel(30, 3, white);
+     matrix.drawPixel(31, 2, white); // valley
+     matrix.drawPixel(32, 0, white);
+     matrix.drawPixel(32, 1, white);
+     matrix.drawPixel(32, 2, white);
+     matrix.drawPixel(32, 3, white);
+     
+     // T (column 4) - clear T shape
+     matrix.drawPixel(39, 0, white);
+     matrix.drawPixel(40, 0, white);
+     matrix.drawPixel(41, 0, white);
+     matrix.drawPixel(40, 1, white);
+     matrix.drawPixel(40, 2, white);
+     matrix.drawPixel(40, 3, white);
+     
+     // F (column 5) - clear F with horizontal bars
+     matrix.drawPixel(48, 0, white);
+     matrix.drawPixel(49, 0, white);
+     matrix.drawPixel(50, 0, white);
+     matrix.drawPixel(48, 1, white);
+     matrix.drawPixel(49, 1, white);
+     matrix.drawPixel(48, 2, white);
+     matrix.drawPixel(48, 3, white);
+     
+     // S (column 6) - more recognizable S shape
+     matrix.drawPixel(57, 0, white);
+     matrix.drawPixel(58, 0, white);
+     matrix.drawPixel(57, 1, white);
+     matrix.drawPixel(58, 2, white);
+     matrix.drawPixel(57, 3, white);
+     matrix.drawPixel(58, 3, white);
     
     // === CALCULATE FIRST DAY OF MONTH ===
     struct tm timeStruct;
@@ -119,9 +176,10 @@ void displayCalendarWithMonth(int month, int year) {
           break;
         }
         
-        // Calculate box position
-        int x = dayOfWeek * cellWidth + (cellWidth - boxSize) / 2;  // Center in column
-        int y = headerHeight + week * cellHeight + (cellHeight - boxSize) / 2;  // Center in row
+        // Calculate diamond position (diamonds are 3x3 pixels when drawn)
+        int diamondDisplaySize = 3;  // Actual visual size of diamond
+        int x = dayOfWeek * cellWidth + (cellWidth - diamondDisplaySize) / 2;  // Center in column
+        int y = headerHeight + week * cellHeight + (cellHeight - diamondDisplaySize) / 2;  // Center in row
         
         // Check if this day has activity
         bool hasActivity = false;
@@ -132,9 +190,13 @@ void displayCalendarWithMonth(int month, int year) {
           }
         }
         
-        // Draw bordered square
+        // Draw diamond (rotated square)
         uint16_t boxColor = hasActivity ? green : white;
-        matrix.drawRect(x, y, boxSize, boxSize, boxColor);
+        // 2x2 diamond pattern (4 pixels total)
+        matrix.drawPixel(x + 1, y, boxColor);      // top
+        matrix.drawPixel(x, y + 1, boxColor);      // left
+        matrix.drawPixel(x + 2, y + 1, boxColor);  // right
+        matrix.drawPixel(x + 1, y + 2, boxColor);  // bottom
         
         dayCounter++;
       }
@@ -143,17 +205,24 @@ void displayCalendarWithMonth(int month, int year) {
         break;
       }
     }
-    
-    matrix.show();
+     
+    // Calendar is fully drawn to buffer - now show it with transition
+    matrix.show();  // Display the calendar immediately
+}
+
+void transitionToCalendar() {
+    // For now, just ensure calendar is visible
+    // TODO: Add cool transition effect that doesn't overwrite calendar
+    delay(100);
 }
 
 void showLoadingStatus(const char* statusMessage) {
-     // Smooth rotating square with color gradient - ANIMATED!
+     // Smooth rotating square with color gradient and "Loading..." text - ANIMATED!
      static float rotation = 0.0f;
      
-     // Show animation for 400ms (buttery smooth spinning)
+     // Show animation for 1200ms (enough for a few dot cycles)
      unsigned long startTime = millis();
-     while (millis() - startTime < 400) {
+     while (millis() - startTime < 1200) {
        // Clear screen for this frame
        matrix.fillScreen(0);
        
@@ -178,8 +247,8 @@ void showLoadingStatus(const char* statusMessage) {
        int colorIdx = (int)huePhase % 6;
        uint16_t squareColor = colors[colorIdx];
        
-       // Center of matrix
-       int centerX = MATRIX_WIDTH / 2;
+       // Left side: rotating square
+       int centerX = 10;  // Move square to left side
        int centerY = MATRIX_HEIGHT / 2;
        int squareSize = 6;
        int halfSize = squareSize / 2;
@@ -212,6 +281,18 @@ void showLoadingStatus(const char* statusMessage) {
            rotatedCorners[next][0], rotatedCorners[next][1],
            squareColor
          );
+       }
+       
+       // Right side: "Wait..." text with animated dots
+       matrix.setTextSize(1);
+       matrix.setTextColor(matrix.color565(255, 255, 255));
+       matrix.setCursor(19, 12);  // Position to right of square
+       matrix.print("Wait");
+       
+       // Animate dots (cycle through 0, 1, 2, 3 dots every 300ms)
+       int dotCount = ((millis() - startTime) / 300) % 4;
+       for (int i = 0; i < dotCount; i++) {
+         matrix.print(".");
        }
        
        matrix.show();
