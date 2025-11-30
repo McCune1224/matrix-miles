@@ -1,0 +1,18 @@
+{
+  "typeCheckingMode": "off",
+  "pythonVersion": "3.9",
+  "include": ["matrixportal_circuitpython"],
+  "extraPaths": ["matrixportal_circuitpython/lib"],
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "reportUndefinedVariable": false,
+  "reportOptionalMemberAccess": false,
+  "reportOptionalSubscript": false,
+  "reportGeneralTypeIssues": false,
+  "reportPrivateUsage": false,
+  "reportConstantRedefinition": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownParameterType": false,
+  "venvPath": ".",
+  "stubPath": "./matrixportal_circuitpython/lib"
+}

@@ -181,7 +181,7 @@ func zapRequestLogger(log *logger.Logger) echo.MiddlewareFunc {
 			}
 
 			if err != nil {
-				fields = append(fields, zap.Error(err))
+				fields = append(fields, zap.String("error", err.Error()))
 				log.Error("Request failed", fields...)
 			} else {
 				log.Info("Request completed", fields...)

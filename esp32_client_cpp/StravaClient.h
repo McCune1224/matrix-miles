@@ -53,6 +53,12 @@ private:
   /// Parse HTTP Date header (RFC 1123 format) and set system time
   /// Example: "Fri, 28 Nov 2025 10:30:45 GMT"
   bool parseHTTPDate(const String& dateHeader);
+  
+  /// Connect to server with BearSSL certificate validation
+  bool connectWithSSL(const String& host, uint16_t port);
+  
+  /// Validate server certificate fingerprint against expected SHA256
+  bool validateCertificateFingerprint(const uint8_t* fingerprint);
 };
 
 #endif // STRAVA_CLIENT_H

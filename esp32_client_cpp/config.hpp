@@ -20,6 +20,10 @@ const char* SERVER_BASE_URL = "https://matrix-miles-production.up.railway.app/ap
 const char* SERVER_BASE_URL = "http://your-test-server.com";
 #endif
 
+// SSL Certificate Fingerprint - Railway.app SHA256 (updated: Nov 2025)
+// Extract with: echo | openssl s_client -connect matrix-miles-production.up.railway.app:443 -servername matrix-miles-production.up.railway.app 2>/dev/null | openssl x509 -noout -fingerprint -sha256 | sed 's/SHA256 Fingerprint=//' | tr -d ':'
+const char* RAILWAY_CERT_SHA256 = "4EE4ADB2CFF9E47C44B4A72FC2C134584C225CA04FFAC28EDE02776367F61CF1";
+
 // User ID for API requests
 const int USER_ID = 1;
 

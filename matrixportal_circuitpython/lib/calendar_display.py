@@ -26,15 +26,25 @@ class CalendarDisplay:
         self.width = width
         self.height = height
 
-        # Get the display
-        self.display = board.DISPLAY
-        self.display.brightness = 1.0
+        # For MatrixPortal M4, we'll use serial output for now
+        # TODO: Initialize actual RGB matrix display with Protomatter
+        self.display = None
+        self.group = None
 
-        # Create main group
-        self.group = displayio.Group()
-        self.display.show(self.group)
+        try:
+            # Try to get the display, but catch any errors
+            if hasattr(board, "DISPLAY"):
+                self.display = board.DISPLAY
+                self.display.brightness = 1.0
+                self.group = displayio.Group()
+                self.display.show(self.group)
+                print(f"[Display] Initialized {width}x{height} on board.DISPLAY")
+            else:
+                print(f"[Display] board.DISPLAY not available")
+        except Exception as e:
+            print(f"[Display] Error initializing display: {e}")
 
-        print(f"[Display] Initialized {width}x{height}")
+        print(f"[Display] Using serial output mode")
 
         # Try to load font (falls back to built-in if not available)
         try:
@@ -45,7 +55,9 @@ class CalendarDisplay:
 
     def clear(self):
         """Clear the display"""
-        self.group.pop()
+        if self.group is not None:
+            if len(self.group) > 0:
+                self.group.pop()
 
     def show_message(self, message, duration=0):
         """
@@ -55,7 +67,15 @@ class CalendarDisplay:
             message (str): Message to display
             duration (int): Duration to show in seconds (0 = permanent until next update)
         """
-        self.group.pop()
+        print(f"[Display] {message}")
+
+        if self.group is None:
+            if duration > 0:
+                time.sleep(duration)
+            return
+
+        if len(self.group) > 0:
+            self.group.pop()
 
         # Create text label
         text_area = label.Label(
@@ -84,7 +104,8 @@ class CalendarDisplay:
                 - "activity_date": date in YYYY-MM-DD format
                 - "type": activity type (run, bike, swim, etc.)
         """
-        self.group.pop()
+        if self.group is not None and len(self.group) > 0:
+            self.group.pop()
 
         print(f"[Display] Rendering {len(activities)} activities")
 
@@ -124,6 +145,18 @@ class CalendarDisplay:
         # (Full calendar visualization would need more sophisticated layout)
 
         try:
+            if self.group is None:
+                # Just print to serial
+                print(f"[Display] Activities: {len(all_activities)}")
+                activity_types = {}
+                for activity in all_activities:
+                    act_type = activity.get("type", "unknown")
+                    activity_types[act_type] = activity_types.get(act_type, 0) + 1
+
+                for act_type, count in activity_types.items():
+                    print(f"[Display]   {act_type}: {count}")
+                return
+
             # Show activity summary
             summary = f"Activities: {len(all_activities)}"
             text_area = label.Label(
@@ -173,6 +206,7 @@ class CalendarDisplay:
             brightness (float): Brightness 0.0 to 1.0
         """
         try:
-            self.display.brightness = max(0.0, min(1.0, brightness))
+            if self.display is not None:
+                self.display.brightness = max(0.0, min(1.0, brightness))
         except Exception as e:
             print(f"[Display] Error setting brightness: {e}")

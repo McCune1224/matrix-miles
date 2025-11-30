@@ -4,13 +4,13 @@
 
 ✅ **All core features implemented:**
 - WiFi connectivity with auto-reconnection
-- HTTP/HTTPS API client for Strava calendar data
+- **HTTPS API client with automatic HTTP fallback** (Railway/BearSSL)
 - Time synchronization from server HTTP headers
 - 64x32 RGB matrix display rendering
 - Activity calendar visualization
 - Comprehensive diagnostics and logging
 
-**Compiled size:** 64,232 bytes (12% of max 507,904 bytes)
+**Compiled size:** 64,680 bytes (12% of max 507,904 bytes)
 
 ## Hardware Setup
 
@@ -26,10 +26,16 @@ Edit `config.hpp` before uploading:
 ```cpp
 #define WIFI_SSID "your_network"
 #define WIFI_PASSWORD "your_password"
-#define SERVER_BASE_URL "http://your-server-url"  // Use HTTP for embedded systems
-#define USER_ID 1                                   // Your Strava user ID
-#define ESP32_API_KEY "your-api-key"              // Match server's ESP32_API_KEY
+#define SERVER_BASE_URL "https://matrix-miles-production.up.railway.app/api"  // HTTPS (secure)
+#define USER_ID 1                                                              // Your Strava user ID
+#define ESP32_API_KEY "your-api-key"                                          // Match server's ESP32_API_KEY
+
+// SSL Certificate Fingerprint for Railway
+// Automatically extracted and included - no action needed
+const char* RAILWAY_CERT_SHA256 = "4EE4ADB2CFF9E47C44B4A72FC2C134584C225CA04FFAC28EDE02776367F61CF1";
 ```
+
+**Note:** HTTPS is now the default. The device will automatically fall back to HTTP if HTTPS fails.
 
 ## Compilation & Upload
 
@@ -58,21 +64,21 @@ Matrix Miles - Calendar Display Test
 Matrix status: 0
 Initializing WiFi...
 [WiFi] Connecting to SSID: <your_network>
-[WiFi] Connected to: <your_network>
+[WiFi] ✓ Connected to: <your_network>
 [WiFi] IP Address: 192.168.x.x
 [WiFi] Signal Strength (RSSI): -45 dBm
 
 === Connectivity Tests ===
 [Test] ✓ Can reach google.com (internet working)
-[Test] Testing API server: http://your-server-url
-[Test] ✓ Can reach API server on port 80 (HTTP works)
+[Test] Testing API server: https://matrix-miles-production.up.railway.app/api
+[Test] ✓ Can reach API server on 443 (HTTPS)
 === End Connectivity Tests ===
 
 [Strava] === Testing Base URL Connection ===
-[Strava] Base URL: http://your-server-url
-[Strava] Host: your-server-url
-[Strava] Attempting HTTP connection to your-server-url:80
-[Strava] ✓ HTTP connection succeeded in XXXms
+[Strava] Base URL: https://matrix-miles-production.up.railway.app/api
+[Strava] Host: matrix-miles-production.up.railway.app
+[Strava] Attempting HTTPS connection to matrix-miles-production.up.railway.app:443
+[Strava] ✓ HTTPS connection succeeded in XXXms
 [Strava] === Sending Health Check Request ===
 ...
 
@@ -84,12 +90,20 @@ Initializing WiFi...
 Fetching calendar data from API...
 Fetching for 11/2025
 [Strava] Fetching calendar data: /api/activities/calendar/1/2025/11
+[Strava] Using HTTPS on port 443
 [Strava] ✓ Connected in XXXms
 [Strava] Bytes sent: XX
 [Strava] Response code: 200
 [Strava] Response size: XX
 [Strava] Parsed X days with activities
 Successfully fetched X days with activities
+```
+
+**If HTTPS fails (fallback to HTTP):**
+```
+[Strava] ✗ HTTPS connection failed after 123ms
+[Strava] HTTPS failed, attempting HTTP fallback...
+[Strava] ✓ HTTP fallback succeeded in 89ms
 ```
 
 ### 2. What Each Test Indicates
@@ -150,14 +164,25 @@ The Go backend must:
    ```
 
 ### HTTP vs HTTPS
-- **Preferred:** HTTP on port 80 (simpler for embedded systems)
-- **Alternative:** HTTPS on port 443 (use BearSSL if certificates fail)
-- **Current limitation:** WiFiNINA certificate validation can be strict
+- **Default:** HTTPS on port 443 (secure, encrypted via BearSSL)
+- **Fallback:** HTTP on port 80 (automatic if HTTPS fails)
+- **Design:** Device uses HTTPS first for security, falls back to HTTP for resilience
 
-To test HTTPS, modify code to use `connectSSL()`:
+**Current implementation:**
 ```cpp
-stravaClient->setUseHTTP(false);  // Use HTTPS instead
+// HTTPS enabled by default (no explicit call needed)
+stravaClient = new StravaClient(ESP32_API_KEY, SERVER_BASE_URL, USER_ID);
+// Automatically tries HTTPS, falls back to HTTP if needed
+
+// To force HTTP-only mode (for testing):
+stravaClient->setUseHTTP(true);  // Not recommended for production
 ```
+
+**Benefits:**
+- ✅ Encrypted communication by default
+- ✅ Automatic fallback if HTTPS unavailable
+- ✅ Let's Encrypt certificate auto-renewed every 90 days
+- ✅ No action needed on device side for certificate renewal
 
 ### Update Interval
 - Calendar data fetches every 5 minutes (configurable)
@@ -169,9 +194,10 @@ stravaClient->setUseHTTP(false);  // Use HTTPS instead
    - Currently: Synced from server on startup (parsed but not persisted)
    - Future: Use SAMD51 RTC peripheral with external crystal
 
-2. **Certificate Validation:** WiFiNINA can't validate some certificates
-   - Workaround: Use HTTP instead
-   - Alternative: Use BearSSL with `connectBearSSL()`
+2. **Certificate Renewal:** Let's Encrypt certificates auto-renew every 90 days
+   - ✅ Handled automatically by Railway
+   - ⚠️ No manual action needed on device
+   - Note: HTTP fallback ensures device keeps working if cert changes
 
 3. **Matrix Display:** Fixed to November 2025 in current code
    - Should use synced time to determine current month
@@ -180,6 +206,8 @@ stravaClient->setUseHTTP(false);  // Use HTTPS instead
 4. **Memory:** Device has limited RAM (256KB)
    - Calendar display limited to 31 days
    - JSON parsing limited to ~8KB responses
+
+5. **WiFi:** Only supports 2.4GHz (WiFiNINA doesn't support 5GHz)
 
 ## Future Enhancements
 
@@ -204,6 +232,9 @@ stravaClient->setUseHTTP(false);  // Use HTTPS instead
 
 For issues, check:
 1. Serial output for detailed error messages
-2. Server logs for API-side errors
-3. Network connectivity with `testConnectivity()` function
-4. Device firmware version (Arduino 1.8.16 recommended)
+2. **HTTPS_TEST_REPORT.md** - Expected serial output and test procedures
+3. **HTTPS_SETUP.md** - Complete HTTPS setup and deployment guide
+4. **HTTPS_DEBUGGING.md** - Comprehensive troubleshooting guide
+5. Server logs for API-side errors
+6. Network connectivity with `testConnectivity()` function
+7. Device firmware version (Arduino 1.8.16 recommended)

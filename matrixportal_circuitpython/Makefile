@@ -5,7 +5,7 @@
 
 # Configuration
 BAUD_RATE := 115200
-CIRCUITPY_MOUNT := /Volumes/CIRCUITPY
+CIRCUITPY_MOUNT := /run/media/$(USER)/CIRCUITPY
 CIRCUITPY_MOUNT_ALT := /media/$(USER)/CIRCUITPY
 DEVICE_PORT := $(shell ls -t /dev/tty.* 2>/dev/null | head -1)
 DEVICE_PORT_ALT := $(shell ls -t /dev/ttyACM* 2>/dev/null | head -1)
@@ -19,40 +19,33 @@ else
   MOUNT := 
 endif
 
-# Color output
-RED := \033[0;31m
-GREEN := \033[0;32m
-YELLOW := \033[0;33m
-BLUE := \033[0;34m
-NC := \033[0m # No Color
-
 help:
-	@echo "$(BLUE)═══════════════════════════════════════════════════════════════════════════$(NC)"
-	@echo "$(BLUE)CircuitPython MatrixPortal M4 - Development Commands$(NC)"
-	@echo "$(BLUE)═══════════════════════════════════════════════════════════════════════════$(NC)"
+	@echo "═══════════════════════════════════════════════════════════════════════════"
+	@echo "CircuitPython MatrixPortal M4 - Development Commands"
+	@echo "═══════════════════════════════════════════════════════════════════════════"
 	@echo ""
-	@echo "$(GREEN)MONITORING & DEBUGGING:$(NC)"
+	@echo "MONITORING & DEBUGGING:"
 	@echo "  make serial          View serial output (115200 baud)"
 	@echo "  make monitor         Alias for serial"
 	@echo "  make repl            Interactive REPL via serial"
 	@echo "  make debug           Debug mode (verbose logging)"
 	@echo ""
-	@echo "$(GREEN)FILE MANAGEMENT:$(NC)"
+	@echo "FILE MANAGEMENT:"
 	@echo "  make upload          Upload code.py and lib/ to device"
 	@echo "  make sync            Sync all Python files to device"
 	@echo "  make copy            Same as upload"
 	@echo "  make config          Setup secrets.py from template"
 	@echo ""
-	@echo "$(GREEN)VERIFICATION:$(NC)"
+	@echo "VERIFICATION:"
 	@echo "  make status          Check device and mount status"
 	@echo "  make test            Test API connectivity"
 	@echo "  make check           Verify file structure on device"
 	@echo ""
-	@echo "$(GREEN)UTILITIES:$(NC)"
+	@echo "UTILITIES:"
 	@echo "  make clean           Remove local temp files"
 	@echo "  make help            Show this help message"
 	@echo ""
-	@echo "$(YELLOW)EXAMPLES:$(NC)"
+	@echo "EXAMPLES:"
 	@echo "  # View real-time output:"
 	@echo "  make serial"
 	@echo ""
@@ -65,15 +58,15 @@ help:
 	@echo "  # Test API without device:"
 	@echo "  make test"
 	@echo ""
-	@echo "$(BLUE)═══════════════════════════════════════════════════════════════════════════$(NC)"
+	@echo "═══════════════════════════════════════════════════════════════════════════"
 
 serial:
-	@echo "$(GREEN)Connecting to serial monitor ($(BAUD_RATE) baud)...$(NC)"
-	@echo "$(YELLOW)Press Ctrl+A then Ctrl+X to exit (screen)$(NC)"
-	@echo "$(YELLOW)Or Ctrl+] to exit (telnet)$(NC)"
+	@echo "Connecting to serial monitor ($(BAUD_RATE) baud)..."
+	@echo "Press Ctrl+A then Ctrl+X to exit (screen)"
+	@echo "Or Ctrl+] to exit (telnet)"
 	@echo ""
 	@if [ -z "$(DEVICE_PORT)" ] && [ -z "$(DEVICE_PORT_ALT)" ]; then \
-		echo "$(RED)Error: No serial device found$(NC)"; \
+		echo "Error: No serial device found"; \
 		echo "Check that your MatrixPortal M4 is connected via USB"; \
 		exit 1; \
 	fi
@@ -84,7 +77,7 @@ serial:
 	elif command -v minicom >/dev/null 2>&1; then \
 		minicom -b $(BAUD_RATE) -D $(DEVICE_PORT)$(DEVICE_PORT_ALT); \
 	else \
-		echo "$(RED)Error: No serial monitor tool found$(NC)"; \
+		echo "Error: No serial monitor tool found"; \
 		echo "Install one of: screen, picocom, or minicom"; \
 		exit 1; \
 	fi
@@ -93,24 +86,24 @@ monitor: serial
 
 # Interactive REPL
 repl:
-	@echo "$(GREEN)Entering CircuitPython REPL...$(NC)"
-	@echo "$(YELLOW)Type Ctrl+D to soft reset$(NC)"
-	@echo "$(YELLOW)Type Ctrl+C to stop running code$(NC)"
-	@echo "$(YELLOW)Type exit() to quit REPL$(NC)"
+	@echo "Entering CircuitPython REPL..."
+	@echo "Type Ctrl+D to soft reset"
+	@echo "Type Ctrl+C to stop running code"
+	@echo "Type exit() to quit REPL"
 	@echo ""
 	@if [ -z "$(DEVICE_PORT)" ] && [ -z "$(DEVICE_PORT_ALT)" ]; then \
-		echo "$(RED)Error: No serial device found$(NC)"; \
+		echo "Error: No serial device found"; \
 		exit 1; \
 	fi
 	@python3 -m serial.tools.miniterm $(DEVICE_PORT)$(DEVICE_PORT_ALT) $(BAUD_RATE) --raw
 
 debug:
-	@echo "$(GREEN)Starting debug mode...$(NC)"
-	@echo "$(YELLOW)Edit code.py and set DEBUG = True near the top$(NC)"
-	@echo "$(YELLOW)Then run: make upload && make serial$(NC)"
+	@echo "Starting debug mode..."
+	@echo "Edit code.py and set DEBUG = True near the top"
+	@echo "Then run: make upload && make serial"
 	@echo ""
 	@if [ ! -f "code.py" ]; then \
-		echo "$(RED)Error: code.py not found in current directory$(NC)"; \
+		echo "Error: code.py not found in current directory"; \
 		exit 1; \
 	fi
 	@echo "Current DEBUG setting:"
@@ -118,26 +111,26 @@ debug:
 
 # Upload code to device
 upload: check-mount
-	@echo "$(GREEN)Uploading files to device...$(NC)"
+	@echo "Uploading files to device..."
 	@echo ""
 	@if [ ! -f "code.py" ]; then \
-		echo "$(RED)Error: code.py not found$(NC)"; \
+		echo "Error: code.py not found"; \
 		exit 1; \
 	fi
 	@if [ ! -d "lib" ]; then \
-		echo "$(RED)Error: lib/ directory not found$(NC)"; \
+		echo "Error: lib/ directory not found"; \
 		exit 1; \
 	fi
-	@echo "$(BLUE)Copying code.py...$(NC)"
+	@echo "Copying code.py..."
 	@cp code.py "$(MOUNT)/"
-	@echo "$(GREEN)✓ code.py copied$(NC)"
+	@echo "✓ code.py copied"
 	@echo ""
-	@echo "$(BLUE)Copying lib/ directory...$(NC)"
+	@echo "Copying lib/ directory..."
 	@cp -r lib/* "$(MOUNT)/lib/"
-	@echo "$(GREEN)✓ lib/ copied$(NC)"
+	@echo "✓ lib/ copied"
 	@echo ""
-	@echo "$(GREEN)✓ Upload complete!$(NC)"
-	@echo "$(YELLOW)Device will auto-reload in a few seconds...$(NC)"
+	@echo "✓ Upload complete!"
+	@echo "Device will auto-reload in a few seconds..."
 
 sync: upload
 
@@ -145,25 +138,25 @@ copy: upload
 
 # Setup configuration
 config:
-	@echo "$(GREEN)Setting up configuration...$(NC)"
+	@echo "Setting up configuration..."
 	@echo ""
 	@if [ ! -f "config.example.py" ]; then \
-		echo "$(RED)Error: config.example.py not found$(NC)"; \
+		echo "Error: config.example.py not found"; \
 		exit 1; \
 	fi
 	@if [ -f "secrets.py" ]; then \
-		echo "$(YELLOW)secrets.py already exists$(NC)"; \
+		echo "secrets.py already exists"; \
 		echo "Backup existing file? (y/n)"; \
 		read -r response; \
 		if [ "$$response" = "y" ]; then \
 			cp secrets.py secrets.py.backup; \
-			echo "$(GREEN)Backed up to secrets.py.backup$(NC)"; \
+			echo "Backed up to secrets.py.backup"; \
 		fi; \
 	fi
 	@cp config.example.py secrets.py
-	@echo "$(GREEN)✓ secrets.py created from template$(NC)"
+	@echo "✓ secrets.py created from template"
 	@echo ""
-	@echo "$(YELLOW)Next steps:$(NC)"
+	@echo "Next steps:"
 	@echo "  1. Edit secrets.py with your configuration:"
 	@echo "     - WiFi SSID and password"
 	@echo "     - API base URL"
@@ -175,94 +168,94 @@ config:
 
 # Check device status
 status:
-	@echo "$(BLUE)Device Status Check$(NC)"
-	@echo "$(BLUE)═══════════════════════════════════════════════════════════$(NC)"
+	@echo "Device Status Check"
+	@echo "═══════════════════════════════════════════════════════════"
 	@echo ""
-	@echo "$(YELLOW)Mount Point:$(NC)"
+	@echo "Mount Point:"
 	@if [ -n "$(MOUNT)" ]; then \
-		echo "  $(GREEN)✓ CIRCUITPY mounted at: $(MOUNT)$(NC)"; \
+		echo "  ✓ CIRCUITPY mounted at: $(MOUNT)"; \
 		echo ""; \
 		echo "  Files on device:"; \
 		ls -1 "$(MOUNT)/" | sed 's/^/    /'; \
 	else \
-		echo "  $(RED)✗ CIRCUITPY not mounted$(NC)"; \
+		echo "  ✗ CIRCUITPY not mounted"; \
 		echo "    Expected at: $(CIRCUITPY_MOUNT) or $(CIRCUITPY_MOUNT_ALT)"; \
 		echo "    Connect device and check mount status"; \
 	fi
 	@echo ""
-	@echo "$(YELLOW)Serial Port:$(NC)"
+	@echo "Serial Port:"
 	@if [ -n "$(DEVICE_PORT)" ]; then \
-		echo "  $(GREEN)✓ Device found at: $(DEVICE_PORT)$(NC)"; \
+		echo "  ✓ Device found at: $(DEVICE_PORT)"; \
 	elif [ -n "$(DEVICE_PORT_ALT)" ]; then \
-		echo "  $(GREEN)✓ Device found at: $(DEVICE_PORT_ALT)$(NC)"; \
+		echo "  ✓ Device found at: $(DEVICE_PORT_ALT)"; \
 	else \
-		echo "  $(RED)✗ No serial device found$(NC)"; \
+		echo "  ✗ No serial device found"; \
 		echo "    Connect device via USB"; \
 	fi
 	@echo ""
-	@echo "$(YELLOW)Local Files:$(NC)"
-	@echo "  code.py: $(shell test -f code.py && echo '$(GREEN)✓$(NC)' || echo '$(RED)✗$(NC)')"
-	@echo "  lib/: $(shell test -d lib && echo '$(GREEN)✓$(NC)' || echo '$(RED)✗$(NC)')"
-	@echo "  config.example.py: $(shell test -f config.example.py && echo '$(GREEN)✓$(NC)' || echo '$(RED)✗$(NC)')"
-	@echo "  secrets.py: $(shell test -f secrets.py && echo '$(GREEN)✓$(NC)' || echo '$(YELLOW)not configured$(NC)')"
+	@echo "Local Files:"
+	@echo "  code.py: $(shell test -f code.py && echo '✓' || echo '✗')"
+	@echo "  lib/: $(shell test -d lib && echo '✓' || echo '✗')"
+	@echo "  config.example.py: $(shell test -f config.example.py && echo '✓' || echo '✗')"
+	@echo "  secrets.py: $(shell test -f secrets.py && echo '✓' || echo 'not configured')"
 	@echo ""
 
 # Verify file structure on device
 check:
-	@echo "$(BLUE)Verifying device file structure...$(NC)"
+	@echo "Verifying device file structure..."
 	@echo ""
 	@if [ -z "$(MOUNT)" ]; then \
-		echo "$(RED)Error: CIRCUITPY not mounted$(NC)"; \
+		echo "Error: CIRCUITPY not mounted"; \
 		exit 1; \
 	fi
-	@echo "$(YELLOW)Expected files:$(NC)"
+	@echo "Expected files:"
 	@if [ -f "$(MOUNT)/code.py" ]; then \
-		echo "  $(GREEN)✓ code.py$(NC) ($(shell wc -l < $(MOUNT)/code.py) lines)"; \
+		echo "  ✓ code.py ($(shell wc -l < $(MOUNT)/code.py) lines)"; \
 	else \
-		echo "  $(RED)✗ code.py missing$(NC)"; \
+		echo "  ✗ code.py missing"; \
 	fi
 	@if [ -f "$(MOUNT)/lib/api_client.py" ]; then \
-		echo "  $(GREEN)✓ lib/api_client.py$(NC) ($(shell wc -l < $(MOUNT)/lib/api_client.py) lines)"; \
+		echo "  ✓ lib/api_client.py ($(shell wc -l < $(MOUNT)/lib/api_client.py) lines)"; \
 	else \
-		echo "  $(RED)✗ lib/api_client.py missing$(NC)"; \
+		echo "  ✗ lib/api_client.py missing"; \
 	fi
 	@if [ -f "$(MOUNT)/lib/wifi_manager.py" ]; then \
-		echo "  $(GREEN)✓ lib/wifi_manager.py$(NC) ($(shell wc -l < $(MOUNT)/lib/wifi_manager.py) lines)"; \
+		echo "  ✓ lib/wifi_manager.py ($(shell wc -l < $(MOUNT)/lib/wifi_manager.py) lines)"; \
 	else \
-		echo "  $(RED)✗ lib/wifi_manager.py missing$(NC)"; \
+		echo "  ✗ lib/wifi_manager.py missing"; \
 	fi
 	@if [ -f "$(MOUNT)/lib/calendar_display.py" ]; then \
-		echo "  $(GREEN)✓ lib/calendar_display.py$(NC) ($(shell wc -l < $(MOUNT)/lib/calendar_display.py) lines)"; \
+		echo "  ✓ lib/calendar_display.py ($(shell wc -l < $(MOUNT)/lib/calendar_display.py) lines)"; \
 	else \
-		echo "  $(RED)✗ lib/calendar_display.py missing$(NC)"; \
+		echo "  ✗ lib/calendar_display.py missing"; \
 	fi
 	@echo ""
-	@echo "$(YELLOW)Required Adafruit libraries:$(NC)"
+	@echo "Required Adafruit libraries:"
 	@if [ -f "$(MOUNT)/lib/adafruit_requests.mpy" ]; then \
-		echo "  $(GREEN)✓ adafruit_requests.mpy$(NC)"; \
+		echo "  ✓ adafruit_requests.mpy"; \
 	else \
-		echo "  $(RED)✗ adafruit_requests.mpy missing$(NC)"; \
+		echo "  ✗ adafruit_requests.mpy missing"; \
 	fi
 	@if [ -d "$(MOUNT)/lib/adafruit_display_text" ]; then \
-		echo "  $(GREEN)✓ adafruit_display_text/$(NC)"; \
+		echo "  ✓ adafruit_display_text/"; \
 	else \
-		echo "  $(RED)✗ adafruit_display_text/ missing$(NC)"; \
+		echo "  ✗ adafruit_display_text/ missing"; \
 	fi
 	@if [ -d "$(MOUNT)/lib/adafruit_bitmap_font" ]; then \
-		echo "  $(GREEN)✓ adafruit_bitmap_font/$(NC)"; \
+		echo "  ✓ adafruit_bitmap_font/"; \
 	else \
-		echo "  $(RED)✗ adafruit_bitmap_font/ missing$(NC)"; \
+		echo "  ✗ adafruit_bitmap_font/ missing"; \
 	fi
 	@echo ""
 
 # Test API connectivity
 test:
-	@echo "$(BLUE)Testing API Connectivity$(NC)"
-	@echo "$(BLUE)═══════════════════════════════════════════════════════════$(NC)"
+	@echo "Testing API Connectivity"
+	@echo "═══════════════════════════════════════════════════════════"
 	@echo ""
 	@if [ ! -f "secrets.py" ]; then \
-		echo "$(YELLOW)Note: secrets.py not found. Using example values.$(NC)"; \
-		echo "Run 'make config' first to set up actual credentials.$(NC)"; \
+		echo "Note: secrets.py not found. Using example values."; \
+		echo "Run 'make config' first to set up actual credentials."; \
 		echo ""; \
 		API_BASE_URL="https://matrix-miles-production.up.railway.app"; \
 		API_KEY="test-key"; \
@@ -270,21 +263,21 @@ test:
 		API_BASE_URL=$$(grep "API_BASE_URL" secrets.py | cut -d'"' -f2); \
 		API_KEY=$$(grep "API_KEY" secrets.py | cut -d'"' -f2); \
 	fi
-	@echo "$(YELLOW)Testing API base URL: $$API_BASE_URL$(NC)"
+	@echo "Testing API base URL: $$API_BASE_URL"
 	@echo ""
-	@echo "$(BLUE)Health check:$(NC)"
-	@curl -s -I "$$API_BASE_URL/health" | head -3 || echo "$(RED)Failed to connect$(NC)"
+	@echo "Health check:"
+	@curl -s -I "$$API_BASE_URL/health" | head -3 || echo "Failed to connect"
 	@echo ""
-	@echo "$(BLUE)API test (this requires valid API key):$(NC)"
+	@echo "API test (this requires valid API key):"
 	@echo "  Run: make test-api API_KEY=your-key USER_ID=1"
 	@echo ""
 
 test-api:
 	@if [ -z "$(API_KEY)" ] || [ -z "$(USER_ID)" ]; then \
-		echo "$(RED)Usage: make test-api API_KEY=<key> USER_ID=<id>$(NC)"; \
+		echo "Usage: make test-api API_KEY=<key> USER_ID=<id>"; \
 		exit 1; \
 	fi
-	@echo "$(BLUE)Testing API request...$(NC)"
+	@echo "Testing API request..."
 	@API_BASE_URL=$$(grep "API_BASE_URL" secrets.py 2>/dev/null | cut -d'"' -f2 || echo "https://matrix-miles-production.up.railway.app"); \
 	echo "Base URL: $$API_BASE_URL"; \
 	echo "User ID: $(USER_ID)"; \
@@ -295,17 +288,17 @@ test-api:
 
 # Clean local temporary files
 clean:
-	@echo "$(BLUE)Cleaning up...$(NC)"
+	@echo "Cleaning up..."
 	@find . -type f -name "*.pyc" -delete
 	@find . -type d -name "__pycache__" -delete
 	@find . -type f -name "*.swp" -delete
 	@find . -type f -name "*~" -delete
-	@echo "$(GREEN)✓ Cleaned$(NC)"
+	@echo "✓ Cleaned"
 
 # Internal target to check mount
 check-mount:
 	@if [ -z "$(MOUNT)" ]; then \
-		echo "$(RED)Error: CIRCUITPY not mounted$(NC)"; \
+		echo "Error: CIRCUITPY not mounted"; \
 		echo ""; \
 		echo "Please:"; \
 		echo "  1. Connect your MatrixPortal M4 via USB"; \
@@ -317,7 +310,7 @@ check-mount:
 # Platform detection
 .PHONY: platform
 platform:
-	@echo "$(BLUE)Platform Detection$(NC)"
+	@echo "Platform Detection"
 	@echo "OS: $$(uname -s)"
 	@echo "Mount: $(MOUNT)"
 	@echo "Device: $(DEVICE_PORT)$(DEVICE_PORT_ALT)"

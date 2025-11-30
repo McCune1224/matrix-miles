@@ -92,15 +92,15 @@ void setup() {
     // we implement time sync (e.g., from HTTP headers or NTP via SAMD21 RTC peripheral)
     // For now, we'll fetch the current month's data
     
-    // Initialize Strava client after WiFi is connected
-    stravaClient = new StravaClient(ESP32_API_KEY, SERVER_BASE_URL, USER_ID);
-    
-    // Use HTTP to avoid HTTPS certificate issues
-    // If you want HTTPS, make sure your server's SSL certificate is in WiFiNINA's trust store
-    stravaClient->setUseHTTP(true);
-    
-    // Test the API connection with a diagnostic GET request
-    stravaClient->testConnection();
+     // Initialize Strava client after WiFi is connected
+     stravaClient = new StravaClient(ESP32_API_KEY, SERVER_BASE_URL, USER_ID);
+     
+     // Use HTTPS by default with automatic HTTP fallback
+     // HTTPS is now the default; use setUseHTTP(true) only for testing/fallback
+     // (HTTPS disabled by default - useHTTP=false)
+     
+     // Test the API connection with a diagnostic GET request
+     stravaClient->testConnection();
     
     // Sync time from server before fetching calendar data
     Serial.println("\nAttempting to synchronize time with server...");

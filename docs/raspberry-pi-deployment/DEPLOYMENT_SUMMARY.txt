@@ -1,0 +1,132 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║            MATRIX MILES: RASPBERRY PI DEPLOYMENT PACKAGE                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+✓ BINARIES READY
+================
+
+Located at: ~/Code/matrix-miles/strava-server/
+
+1. server-arm64 (16 MB)
+   → For Raspberry Pi 4 and 5 (64-bit ARM)
+   → Recommended
+
+2. server-armv7 (16 MB)
+   → For Raspberry Pi 3 (32-bit ARM)
+   → Works fine, slightly slower
+
+Both are:
+- Statically linked (no runtime dependencies needed)
+- Built for Linux ARM architecture
+- Ready to deploy
+
+
+✓ DOCUMENTATION READY
+=====================
+
+1. RASPBERRY_PI_QUICK_START.md (5 min read)
+   → Express setup with automated script
+   → Architecture reference
+   → Troubleshooting quick reference
+
+2. RASPBERRY_PI_DEPLOYMENT.md (10 min read)
+   → Detailed step-by-step guide
+   → Comprehensive troubleshooting
+   → Network configuration tips
+
+3. deploy-to-pi.sh (Automated)
+   → One-command deployment
+   → Handles everything automatically
+   → Recommended for first-time setup
+
+
+NEXT STEPS
+==========
+
+1. Determine your Raspberry Pi model:
+   On Pi: uname -m
+   - aarch64 = Use server-arm64
+   - armv7l = Use server-armv7
+
+2. Find your Pi's IP address:
+   On Pi: hostname -I
+   (or arp-scan if you don't have SSH access yet)
+
+3. Choose deployment method:
+
+   AUTOMATED (Recommended):
+   ─────────────────────
+   chmod +x /tmp/deploy-to-pi.sh
+   /tmp/deploy-to-pi.sh <PI_IP> <arch> <DB_PASSWORD> <STRAVA_ID> <STRAVA_SECRET>
+
+   MANUAL:
+   ──────
+   See RASPBERRY_PI_DEPLOYMENT.md for step-by-step instructions
+
+4. Update MatrixPortal settings.toml:
+   API_BASE_URL = "http://<PI_IP>:8080"
+
+5. Verify everything works:
+   curl -H "X-API-Key: 9f267ca3adb01e394f917902588fc920ae3669e1889f360f16bc1792768779e6" \
+     http://<PI_IP>:8080/api/activities/recent/1
+
+
+WHY RASPBERRY PI?
+=================
+
+✓ Always on (unlike your dev machine)
+✓ Low power consumption (~5W)
+✓ Runs exactly your code without changes
+✓ Local network only (no internet required)
+✓ Simple HTTP (no SSL headaches)
+✓ Easy to manage with systemd
+
+
+REQUIREMENTS
+============
+
+Hardware:
+- Raspberry Pi 3, 4, or 5
+- Micro SD card (any Pi OS)
+- Network connectivity
+
+Software:
+- Raspberry Pi OS Lite (recommended)
+- SSH access (usually pre-enabled)
+- PostgreSQL (can be local or remote)
+
+Network:
+- Pi and MatrixPortal on same LAN
+- Port 8080 accessible
+
+
+FEATURES YOU GET
+================
+
+✓ Fetch Strava activities over HTTP (no SSL issues!)
+✓ Runs 24/7 on Raspberry Pi
+✓ Auto-starts after Pi reboot
+✓ Clean systemd logging
+✓ API responds in milliseconds on local network
+✓ Same functionality as Railway deployment
+
+
+COST
+====
+
+Hardware: $35-90 (Pi itself, already have it)
+Electricity: ~$5/year to run 24/7
+Setup time: 10 minutes (with script) or 30 minutes (manual)
+Maintenance: Minimal (just update Pi OS occasionally)
+
+
+QUESTIONS?
+==========
+
+Check these in order:
+1. RASPBERRY_PI_QUICK_START.md - Most common scenarios
+2. RASPBERRY_PI_DEPLOYMENT.md - Detailed troubleshooting
+3. Server logs: ssh pi@IP sudo journalctl -u strava-server -f
+
+
+NEXT: Ready when you are! Have your Pi's IP and credentials handy.
