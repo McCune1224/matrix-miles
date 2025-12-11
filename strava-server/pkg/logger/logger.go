@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// LogEntry represents a buffered log entry
+// LogEntry represents a buffered log entry, really just a wrapper for zap...
 type LogEntry struct {
 	Level      string
 	Message    string

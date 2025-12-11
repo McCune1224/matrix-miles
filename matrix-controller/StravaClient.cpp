@@ -476,7 +476,6 @@ bool StravaClient::parseHTTPDate(const String& dateHeader) {
    Serial.print(minute);
    Serial.print(":");
    Serial.println(second);
-   
    return true;
 }
 
