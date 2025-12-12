@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -15,6 +16,12 @@ type WeatherHandler struct {
 	lat    string
 	lon    string
 	client *http.Client
+
+	// Cached location from IP geolocation
+	cachedLat  string
+	cachedLon  string
+	locMu      sync.RWMutex
+	locFetched bool
 }
 
 // NewWeatherHandler creates a new weather handler
@@ -46,13 +53,67 @@ type OpenMeteoResponse struct {
 	} `json:"current"`
 }
 
+// IPAPIResponse is the response from ip-api.com (free, no key needed)
+type IPAPIResponse struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
+}
+
+// getLocation returns lat/lon, auto-detecting from IP if not configured
+func (h *WeatherHandler) getLocation() (lat, lon string, err error) {
+	// If explicitly configured, use those values
+	if h.lat != "" && h.lon != "" {
+		return h.lat, h.lon, nil
+	}
+
+	// Check cache first
+	h.locMu.RLock()
+	if h.locFetched {
+		lat, lon = h.cachedLat, h.cachedLon
+		h.locMu.RUnlock()
+		return lat, lon, nil
+	}
+	h.locMu.RUnlock()
+
+	// Fetch location from IP geolocation API (free, no key needed)
+	// Using ip-api.com - 45 requests/minute limit (plenty for our use)
+	resp, err := h.client.Get("http://ip-api.com/json/?fields=lat,lon")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch location: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("IP geolocation API returned status %d", resp.StatusCode)
+	}
+
+	var ipResp IPAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&ipResp); err != nil {
+		return "", "", fmt.Errorf("failed to parse location: %w", err)
+	}
+
+	// Cache the result
+	h.locMu.Lock()
+	h.cachedLat = fmt.Sprintf("%.4f", ipResp.Lat)
+	h.cachedLon = fmt.Sprintf("%.4f", ipResp.Lon)
+	h.locFetched = true
+	lat, lon = h.cachedLat, h.cachedLon
+	h.locMu.Unlock()
+
+	return lat, lon, nil
+}
+
 // GetCurrentWeather returns the current weather for the configured location
 func (h *WeatherHandler) GetCurrentWeather(c echo.Context) error {
+	lat, lon, err := h.getLocation()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to determine location: "+err.Error())
+	}
+
 	// Build Open-Meteo API URL (free, no API key needed)
-	// Docs: https://open-meteo.com/en/docs
 	url := fmt.Sprintf(
 		"https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph",
-		h.lat, h.lon,
+		lat, lon,
 	)
 
 	resp, err := h.client.Get(url)
