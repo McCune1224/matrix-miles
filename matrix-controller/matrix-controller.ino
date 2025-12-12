@@ -69,7 +69,7 @@ unsigned long lastApiCallTime = 0;
 // Forward declarations
 void fetchCalendarData();
 void fetchWeatherData();
-void showLoadingText(const char* text);
+void showLoadingText(const char* text, int progress = -1);
 
 void setup() {
     USE_SERIAL.begin(115200);
@@ -82,6 +82,9 @@ void setup() {
     ProtomatterStatus status = matrix.begin();
     USE_SERIAL.printf("Matrix status: %d\n", status);
     
+    // Give matrix time to initialize
+    delay(100);
+    
     // Clear screen during loading (no flashbang)
     display.fillScreen(0);
     display.show();
@@ -89,6 +92,17 @@ void setup() {
     // Initialize buttons
     buttons.begin();
     USE_SERIAL.println("Buttons initialized (UP=pin2, DOWN=pin3)");
+    
+    // Check WiFi module
+    if (WiFi.status() == WL_NO_MODULE) {
+        USE_SERIAL.println("ERROR: WiFi module not found!");
+        showLoadingText("No WiFi!");
+        while (true) { delay(1000); }  // Halt
+    }
+    
+    String fv = WiFi.firmwareVersion();
+    USE_SERIAL.print("WiFi firmware: ");
+    USE_SERIAL.println(fv);
     
     // Setup panel manager
     panelManager.setDisplay(&display);
@@ -98,17 +112,18 @@ void setup() {
     
     // Initialize WiFi
     USE_SERIAL.println("Connecting to WiFi...");
-    showLoadingText("WiFi...");
+    showLoadingText("", 0);
     
-    if (wifiManager.connect(WIFI_SSID, WIFI_PASSWORD)) {
+    if (wifiManager.connect(WIFI_SSID, WIFI_PASSWORD, 20000)) {  // 20 second timeout
         USE_SERIAL.println("WiFi connected!");
+        showLoadingText("", 20);
         
         // Initialize Strava client
         stravaClient = new StravaClient(ESP32_API_KEY, SERVER_BASE_URL, USER_ID);
         stravaClient->setUseHTTP(true);
         
         // Sync time from server
-        showLoadingText("Syncing...");
+        showLoadingText("", 35);
         if (stravaClient->syncTimeFromServer()) {
             USE_SERIAL.println("Time synced from server");
             
@@ -120,18 +135,23 @@ void setup() {
         }
         
         // Sync activities with Strava
-        showLoadingText("Loading...");
+        showLoadingText("", 50);
         stravaClient->syncActivitiesWithServer();
         
         // Fetch calendar data
+        showLoadingText("", 70);
         fetchCalendarData();
         
         // Fetch weather data
+        showLoadingText("", 90);
         fetchWeatherData();
         
+        showLoadingText("", 100);
         lastApiCallTime = millis();
     } else {
         USE_SERIAL.println("WiFi failed - using demo mode");
+        // Show empty bar on failure
+        showLoadingText("", 0);
     }
     
     // Start panel manager with ConcentricShapes transition to CalendarPanel
@@ -203,15 +223,42 @@ void fetchCalendarData() {
     }
 }
 
-// Display loading text on matrix during startup
-void showLoadingText(const char* text) {
+// Display loading text on matrix during startup with progress bar
+void showLoadingText(const char* text, int progress) {
     display.fillScreen(0);
+    
+    // Progress bar with white border
+    int barWidth = 50;
+    int barHeight = 6;
+    int barX = (64 - barWidth) / 2;  // Center horizontally
+    int barY = 8;
+    
+    // White border (1px)
+    uint16_t white = display.color565(180, 180, 180);
+    display.drawFastHLine(barX, barY, barWidth, white);                    // Top
+    display.drawFastHLine(barX, barY + barHeight - 1, barWidth, white);    // Bottom
+    display.drawFastVLine(barX, barY, barHeight, white);                   // Left
+    display.drawFastVLine(barX + barWidth - 1, barY, barHeight, white);    // Right
+    
+    // Filled portion (green) - inside the border
+    if (progress > 0) {
+        int innerWidth = barWidth - 2;
+        int filledWidth = (progress * innerWidth) / 100;
+        if (filledWidth > 0) {
+            display.fillRect(barX + 1, barY + 1, filledWidth, barHeight - 2, display.color565(0, 200, 0));
+        }
+    }
+    
+    // "Loading..." text (centered below bar)
     display.setTextSize(1);
-    display.setTextColor(display.color565(100, 100, 100));  // Dim gray
-    display.setCursor(2, 12);
-    display.print(text);
+    display.setTextColor(display.color565(180, 180, 180));
+    const char* loadingText = "Loading...";
+    int textWidth = strlen(loadingText) * 6;
+    int textX = (64 - textWidth) / 2;
+    display.setCursor(textX, 18);
+    display.print(loadingText);
+    
     display.show();
-    delay(50);  // Small delay to ensure display refreshes
 }
 
 // Map condition string to WeatherCondition enum

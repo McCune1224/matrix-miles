@@ -3,9 +3,9 @@
 #include <cstdio>
 
 WeatherPanel::WeatherPanel()
-    : condition_(WeatherCondition::Sunny)
-    , tempF_(72)
-    , humidity_(50)
+    : condition_(WeatherCondition::Unknown)
+    , tempF_(0)
+    , humidity_(0)
     , animTime_(0) {
     strcpy(location_, "Local");
 }
