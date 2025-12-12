@@ -1,0 +1,11 @@
+# Build artifacts
+build/
+*.o
+
+# Binary
+simulator
+
+# Editor files
+*.swp
+*~
+.vscode/

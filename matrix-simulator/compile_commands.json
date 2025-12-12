@@ -1,0 +1,97 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O2",
+      "-I",
+      "include",
+      "-c",
+      "-o",
+      "build/CalendarPanel.o",
+      "src/CalendarPanel.cpp"
+    ],
+    "directory": "/home/mckusa/Code/matrix-miles/matrix-simulator",
+    "file": "/home/mckusa/Code/matrix-miles/matrix-simulator/src/CalendarPanel.cpp",
+    "output": "/home/mckusa/Code/matrix-miles/matrix-simulator/build/CalendarPanel.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O2",
+      "-I",
+      "include",
+      "-c",
+      "-o",
+      "build/main.o",
+      "src/main.cpp"
+    ],
+    "directory": "/home/mckusa/Code/matrix-miles/matrix-simulator",
+    "file": "/home/mckusa/Code/matrix-miles/matrix-simulator/src/main.cpp",
+    "output": "/home/mckusa/Code/matrix-miles/matrix-simulator/build/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O2",
+      "-I",
+      "include",
+      "-c",
+      "-o",
+      "build/StravaClient.o",
+      "src/StravaClient.cpp"
+    ],
+    "directory": "/home/mckusa/Code/matrix-miles/matrix-simulator",
+    "file": "/home/mckusa/Code/matrix-miles/matrix-simulator/src/StravaClient.cpp",
+    "output": "/home/mckusa/Code/matrix-miles/matrix-simulator/build/StravaClient.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O2",
+      "-I",
+      "include",
+      "-c",
+      "-o",
+      "build/TerminalDisplay.o",
+      "src/TerminalDisplay.cpp"
+    ],
+    "directory": "/home/mckusa/Code/matrix-miles/matrix-simulator",
+    "file": "/home/mckusa/Code/matrix-miles/matrix-simulator/src/TerminalDisplay.cpp",
+    "output": "/home/mckusa/Code/matrix-miles/matrix-simulator/build/TerminalDisplay.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O2",
+      "-I",
+      "include",
+      "-c",
+      "-o",
+      "build/Transition.o",
+      "src/Transition.cpp"
+    ],
+    "directory": "/home/mckusa/Code/matrix-miles/matrix-simulator",
+    "file": "/home/mckusa/Code/matrix-miles/matrix-simulator/src/Transition.cpp",
+    "output": "/home/mckusa/Code/matrix-miles/matrix-simulator/build/Transition.o"
+  }
+]
