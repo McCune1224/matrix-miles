@@ -42,3 +42,7 @@ Dual-platform codebase: Go backend (strava-server/) + MatrixPortal M4 C++ client
 - **Error handling**: Return bool success, Serial.println for debug output
 - **Configuration**: Use config.hpp for credentials (never commit)
 - **Comments**: Brief function descriptions, explain hardware-specific logic
+
+## Workflow Preferences
+- **Never make commits** - User handles all git commits manually
+- **Local server URL**: `http://192.168.68.100:8080` (Strava server on local network)
