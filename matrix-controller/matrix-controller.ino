@@ -6,9 +6,9 @@
 #include "ProtoDisplay.h"
 #include "ButtonManager.h"
 #include "PanelManager.h"
-#include "SplashPanel.h"
+#include "Transition.h"
 #include "CalendarPanel.h"
-#include "StatsPanel.h"
+#include "WeatherPanel.h"
 #include "StravaClient.h"
 #include "WiFiManager.h"
 
@@ -45,9 +45,8 @@ ButtonManager buttons;
 PanelManager panelManager;
 
 // Panels
-SplashPanel splashPanel;      // Used for loading only, not in rotation
 CalendarPanel calendarPanel;  // Default panel
-StatsPanel statsPanel;        // Stats panel
+WeatherPanel weatherPanel;    // Weather panel
 
 // WiFi manager
 WiFiManager wifiManager;
@@ -68,8 +67,9 @@ const unsigned long API_FETCH_INTERVAL_MS = 5 * 60 * 1000;
 unsigned long lastApiCallTime = 0;
 
 // Forward declarations
-void updateSplashProgress(int percent, const char* status);
 void fetchCalendarData();
+void fetchWeatherData();
+void showLoadingText(const char* text);
 
 void setup() {
     USE_SERIAL.begin(115200);
@@ -82,34 +82,33 @@ void setup() {
     ProtomatterStatus status = matrix.begin();
     USE_SERIAL.printf("Matrix status: %d\n", status);
     
+    // Clear screen during loading (no flashbang)
+    display.fillScreen(0);
+    display.show();
+    
     // Initialize buttons
     buttons.begin();
     USE_SERIAL.println("Buttons initialized (UP=pin2, DOWN=pin3)");
     
-    // Setup panel manager (Calendar and Stats only - Splash is for loading)
+    // Setup panel manager
     panelManager.setDisplay(&display);
     panelManager.addPanel(&calendarPanel);
-    panelManager.addPanel(&statsPanel);
+    panelManager.addPanel(&weatherPanel);
     USE_SERIAL.printf("Panels registered: %d\n", panelManager.panelCount());
-    
-    // Start with splash panel immediately so we can show loading status
-    // (Splash is not in PanelManager rotation - just used for loading)
-    splashPanel.render(&display);
     
     // Initialize WiFi
     USE_SERIAL.println("Connecting to WiFi...");
-    updateSplashProgress(0, "WiFi...");
+    showLoadingText("WiFi...");
     
     if (wifiManager.connect(WIFI_SSID, WIFI_PASSWORD)) {
         USE_SERIAL.println("WiFi connected!");
-        updateSplashProgress(25, "Connected");
         
         // Initialize Strava client
         stravaClient = new StravaClient(ESP32_API_KEY, SERVER_BASE_URL, USER_ID);
         stravaClient->setUseHTTP(true);
         
         // Sync time from server
-        updateSplashProgress(40, "Time...");
+        showLoadingText("Syncing...");
         if (stravaClient->syncTimeFromServer()) {
             USE_SERIAL.println("Time synced from server");
             
@@ -118,27 +117,25 @@ void setup() {
             stravaClient->getSyncedDate(day, month, year);
             calendarPanel.setMonth(month, year);
             calendarPanel.setCurrentDay(day);
-            statsPanel.setCurrentDate(day, month, year);
         }
-        updateSplashProgress(55, "Synced");
         
         // Sync activities with Strava
-        updateSplashProgress(70, "Strava...");
+        showLoadingText("Loading...");
         stravaClient->syncActivitiesWithServer();
         
         // Fetch calendar data
-        updateSplashProgress(85, "Loading...");
         fetchCalendarData();
         
-        updateSplashProgress(100, "Ready!");
+        // Fetch weather data
+        fetchWeatherData();
+        
         lastApiCallTime = millis();
     } else {
         USE_SERIAL.println("WiFi failed - using demo mode");
-        updateSplashProgress(100, "Failed");
     }
     
-    // Start panel manager (will show CalendarPanel first)
-    panelManager.begin();
+    // Start panel manager with ConcentricShapes transition to CalendarPanel
+    panelManager.beginWithTransition(TransitionType::ConcentricShapes, 500);
     
     lastFrameTime = millis();
     USE_SERIAL.println("Setup complete - entering main loop");
@@ -167,10 +164,11 @@ void loop() {
         panelManager.handleButton(event);
     }
     
-    // Periodically refresh calendar data
+    // Periodically refresh data
     if (stravaClient && wifiManager.isConnected()) {
         if (currentTime - lastApiCallTime >= API_FETCH_INTERVAL_MS) {
             fetchCalendarData();
+            fetchWeatherData();
             lastApiCallTime = currentTime;
         }
     }
@@ -178,12 +176,6 @@ void loop() {
     // Update and render current panel
     panelManager.update(deltaMs);
     panelManager.render();
-}
-
-void updateSplashProgress(int percent, const char* status) {
-    // Set progress and status on splash panel and render immediately
-    splashPanel.setProgress(percent, status);
-    splashPanel.render(&display);
 }
 
 void fetchCalendarData() {
@@ -205,9 +197,48 @@ void fetchCalendarData() {
         activityCount = count;
         calendarPanel.setMonth(month, year);
         calendarPanel.setActivities(activityDays, count);
-        statsPanel.setActivities(activityDays, count);
         USE_SERIAL.printf("Loaded %d activity days\n", count);
     } else {
         USE_SERIAL.println("No activities found");
+    }
+}
+
+// Display loading text on matrix during startup
+void showLoadingText(const char* text) {
+    display.fillScreen(0);
+    display.setTextSize(1);
+    display.setTextColor(display.color565(100, 100, 100));  // Dim gray
+    display.setCursor(2, 12);
+    display.print(text);
+    display.show();
+    delay(50);  // Small delay to ensure display refreshes
+}
+
+// Map condition string to WeatherCondition enum
+WeatherCondition mapConditionString(const char* condition) {
+    if (strcmp(condition, "sunny") == 0) return WeatherCondition::Sunny;
+    if (strcmp(condition, "partly_cloudy") == 0) return WeatherCondition::PartlyCloudy;
+    if (strcmp(condition, "cloudy") == 0) return WeatherCondition::Cloudy;
+    if (strcmp(condition, "rainy") == 0) return WeatherCondition::Rainy;
+    if (strcmp(condition, "snowy") == 0) return WeatherCondition::Snowy;
+    if (strcmp(condition, "windy") == 0) return WeatherCondition::Windy;
+    if (strcmp(condition, "stormy") == 0) return WeatherCondition::Stormy;
+    return WeatherCondition::Unknown;
+}
+
+void fetchWeatherData() {
+    if (!stravaClient) return;
+    
+    USE_SERIAL.println("Fetching weather data...");
+    
+    WeatherData weather;
+    if (stravaClient->fetchWeather(&weather)) {
+        WeatherCondition condition = mapConditionString(weather.condition);
+        weatherPanel.setWeather(condition, weather.tempF, weather.humidity);
+        USE_SERIAL.printf("Weather updated: %s, %dF, %d%%\n", 
+                          weather.condition, weather.tempF, weather.humidity);
+    } else {
+        USE_SERIAL.println("Failed to fetch weather - using defaults");
+        weatherPanel.setWeather(WeatherCondition::Unknown, 0, 0);
     }
 }

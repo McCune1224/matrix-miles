@@ -5,6 +5,7 @@
 #include <memory>
 #include <csignal>
 #include <string>
+#include <cstring>
 
 // Terminal input handling (raw mode for j/k keys)
 #include <termios.h>
@@ -58,57 +59,147 @@ char readKey() {
     return 0;
 }
 
-// Simple stats panel for testing transitions
+// Cool stats panel with visual elements
 class StatsPanel : public Panel {
 public:
-    StatsPanel() : animOffset_(0) {}
+    StatsPanel() : animTime_(0) {
+        // Mock data for now - weekly miles per day (Sun-Sat)
+        weeklyMiles_[0] = 0;    // Sun
+        weeklyMiles_[1] = 3.2f; // Mon
+        weeklyMiles_[2] = 0;    // Tue
+        weeklyMiles_[3] = 5.1f; // Wed
+        weeklyMiles_[4] = 0;    // Thu
+        weeklyMiles_[5] = 4.5f; // Fri
+        weeklyMiles_[6] = 6.2f; // Sat
+        
+        totalMiles_ = 19.0f;
+        goalMiles_ = 25.0f;
+        totalRuns_ = 4;
+    }
     
     void render(IDisplay* display) override {
         display->fillScreen(0);
         
         uint16_t white = display->color565(255, 255, 255);
         uint16_t green = display->color565(0, 255, 0);
-        uint16_t blue = display->color565(100, 150, 255);
+        uint16_t dimGreen = display->color565(0, 100, 0);
+        uint16_t orange = display->color565(255, 150, 0);
+        uint16_t gray = display->color565(80, 80, 80);
+        uint16_t cyan = display->color565(0, 200, 255);
         
-        // Title
-        display->setCursor(4, 2);
-        display->setTextColor(white);
+        // === LEFT SIDE: Weekly bar chart ===
+        // Days: S M T W T F S (7 bars)
+        // Each bar max height = 20px, width = 3px, gap = 1px
+        // Total width = 7*3 + 6*1 = 27px
+        int barStartX = 2;
+        int barBaseY = 26;  // Bottom of bars
+        int barWidth = 3;
+        int barGap = 1;
+        int maxBarHeight = 18;
+        
+        // Find max miles for scaling
+        float maxMiles = 1.0f;
+        for (int i = 0; i < 7; i++) {
+            if (weeklyMiles_[i] > maxMiles) maxMiles = weeklyMiles_[i];
+        }
+        
+        // Draw bars
+        for (int i = 0; i < 7; i++) {
+            int x = barStartX + i * (barWidth + barGap);
+            int height = (int)((weeklyMiles_[i] / maxMiles) * maxBarHeight);
+            if (height < 1 && weeklyMiles_[i] > 0) height = 1;
+            
+            if (height > 0) {
+                // Filled bar with gradient effect
+                uint16_t barColor = (i == 6) ? orange : green;  // Today (Sat) is orange
+                display->fillRect(x, barBaseY - height, barWidth, height, barColor);
+            }
+            
+            // Draw base tick mark
+            display->drawPixel(x + 1, barBaseY + 1, gray);
+        }
+        
+        // Weekend markers at bottom
         display->setTextSize(1);
-        display->print("STATS");
+        display->setTextColor(gray);
+        for (int i = 0; i < 7; i++) {
+            int x = barStartX + i * (barWidth + barGap);
+            // Draw single pixel "dots" for weekend days
+            if (i == 0 || i == 6) {
+                display->drawPixel(x + 1, barBaseY + 3, gray);
+            }
+        }
         
-        // Draw some sample bars
-        int barY = 12;
+        // === RIGHT SIDE: Stats summary ===
+        int rightX = 34;
         
-        // Distance bar
-        display->setCursor(2, barY);
+        // Total miles - big number
         display->setTextColor(white);
-        display->print("D");
-        int distWidth = 35 + (animOffset_ % 10);
-        display->fillRect(8, barY, distWidth, 4, green);
+        display->setCursor(rightX, 2);
+        char milesStr[8];
+        snprintf(milesStr, sizeof(milesStr), "%d", (int)totalMiles_);
+        display->print(milesStr);
         
-        // Time bar
-        barY += 7;
-        display->setCursor(2, barY);
-        display->print("T");
-        int timeWidth = 25 + ((animOffset_ + 5) % 10);
-        display->fillRect(8, barY, timeWidth, 4, blue);
+        // "mi" label
+        display->setTextColor(gray);
+        int milesWidth = strlen(milesStr) * 6;
+        display->setCursor(rightX + milesWidth + 1, 2);
+        display->print("mi");
         
-        // Count bar  
-        barY += 7;
-        display->setCursor(2, barY);
-        display->print("N");
-        int countWidth = 40 + ((animOffset_ + 3) % 10);
-        display->fillRect(8, barY, countWidth, 4, display->color565(255, 200, 0));
+        // Progress bar toward goal
+        int progY = 11;
+        int progWidth = 26;
+        int progHeight = 3;
+        float progress = totalMiles_ / goalMiles_;
+        if (progress > 1.0f) progress = 1.0f;
+        int filledWidth = (int)(progress * progWidth);
+        
+        // Background
+        display->fillRect(rightX, progY, progWidth, progHeight, dimGreen);
+        // Filled portion
+        if (filledWidth > 0) {
+            display->fillRect(rightX, progY, filledWidth, progHeight, green);
+        }
+        
+        // Goal indicator at end
+        display->drawPixel(rightX + progWidth - 1, progY - 1, white);
+        display->drawPixel(rightX + progWidth - 1, progY + progHeight, white);
+        
+        // Runs count with icon
+        display->setTextColor(cyan);
+        display->setCursor(rightX, 17);
+        char runsStr[8];
+        snprintf(runsStr, sizeof(runsStr), "%dr", totalRuns_);
+        display->print(runsStr);
+        
+        // Animated "pulse" dot to show it's live
+        int pulsePhase = (animTime_ / 500) % 2;
+        if (pulsePhase == 0) {
+            display->drawPixel(61, 2, green);
+        }
     }
     
     void update(uint32_t deltaMs) override {
-        animOffset_ += deltaMs / 100;
+        animTime_ += deltaMs;
     }
     
     const char* name() const override { return "Stats"; }
     
+    void setWeeklyData(float miles[7], float total, float goal, int runs) {
+        for (int i = 0; i < 7; i++) {
+            weeklyMiles_[i] = miles[i];
+        }
+        totalMiles_ = total;
+        goalMiles_ = goal;
+        totalRuns_ = runs;
+    }
+    
 private:
-    uint32_t animOffset_;
+    uint32_t animTime_;
+    float weeklyMiles_[7];
+    float totalMiles_;
+    float goalMiles_;
+    int totalRuns_;
 };
 
 // Welcome/splash panel

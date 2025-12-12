@@ -12,6 +12,7 @@ type Config struct {
 	Strava   StravaConfig
 	Database DatabaseConfig
 	Security SecurityConfig
+	Weather  WeatherConfig
 }
 
 type ServerConfig struct {
@@ -40,6 +41,11 @@ type SecurityConfig struct {
 	AdminPassword string
 }
 
+type WeatherConfig struct {
+	Lat string
+	Lon string
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
@@ -66,6 +72,10 @@ func Load() (*Config, error) {
 			ESP32APIKey:   getEnv("ESP32_API_KEY", ""),
 			AdminUsername: getEnv("ADMIN_USERNAME", "admin"),
 			AdminPassword: getEnv("ADMIN_PASSWORD", ""),
+		},
+		Weather: WeatherConfig{
+			Lat: getEnv("WEATHER_LAT", "40.7128"), // Default: NYC
+			Lon: getEnv("WEATHER_LON", "-74.0060"),
 		},
 	}
 

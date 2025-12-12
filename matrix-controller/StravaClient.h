@@ -11,6 +11,14 @@ struct CalendarDay {
   float distance;    // Total distance in km
 };
 
+// Weather data structure
+struct WeatherData {
+  char condition[16];   // sunny, cloudy, rainy, snowy, windy, stormy, partly_cloudy
+  int tempF;            // Temperature in Fahrenheit
+  int humidity;         // Humidity percentage
+  float windSpeed;      // Wind speed in mph
+};
+
 class StravaClient {
 public:
    StravaClient(const char* apiKey, const char* baseUrl, int userId);
@@ -41,6 +49,10 @@ public:
     /// Trigger activity sync on the server (calls POST /api/sync/:userId)
     /// This pulls the latest activities from Strava for the current month
     bool syncActivitiesWithServer();
+    
+    /// Fetch current weather from server
+    /// Returns true if weather was successfully fetched
+    bool fetchWeather(WeatherData* weather);
 
 private:
    const char* API_KEY;

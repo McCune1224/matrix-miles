@@ -191,6 +191,14 @@ public:
         }
     }
     
+    // Initialize first panel with a transition animation
+    void beginWithTransition(TransitionType type = TransitionType::DiamondWipe, uint32_t durationMs = 400) {
+        if (panelCount_ > 0 && panels_[0]) {
+            pendingPanel_ = 0;
+            transition_.start(type, durationMs);
+        }
+    }
+    
 private:
     Panel* panels_[MAX_PANELS];
     int panelCount_;

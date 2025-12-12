@@ -73,6 +73,10 @@ func main() {
 	oauthHandler := handlers.NewOAuthHandler(queries, stravaClient)
 	apiHandler := handlers.NewAPIHandler(queries, stravaClient)
 	logHandler := handlers.NewLogHandler(queries)
+	weatherHandler := handlers.NewWeatherHandler(
+		cfg.Weather.Lat,
+		cfg.Weather.Lon,
+	)
 
 	// Initialize Echo
 	e := echo.New()
@@ -106,6 +110,7 @@ func main() {
 	api.GET("/stats/:userId", apiHandler.GetUserStats)
 	api.POST("/sync/:userId", apiHandler.SyncActivities)
 	api.GET("/sync/:userId", apiHandler.SyncActivities)
+	api.GET("/weather", weatherHandler.GetCurrentWeather)
 
 	admin := e.Group("/admin")
 	// Admin routes (protected with basic auth)

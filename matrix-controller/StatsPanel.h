@@ -4,8 +4,9 @@
 #include "Panel.h"
 #include "StravaClient.h"
 
-// StatsPanel - displays weekly/monthly activity statistics
-// Shows activity count and total distance for week and month
+// StatsPanel - displays weekly bar chart and stats summary
+// Left side: 7-day bar chart (Sun-Sat)
+// Right side: Total miles, progress bar toward goal, run count
 class StatsPanel : public Panel {
 public:
     StatsPanel();
@@ -16,7 +17,7 @@ public:
     
     void onEnter() override;
     
-    // Set the current date for week calculations
+    // Set the current date for week calculations and "today" highlight
     void setCurrentDate(int day, int month, int year);
     
     // Set activity data (same data as calendar)
@@ -31,11 +32,15 @@ private:
     CalendarDay activities_[31];
     int activityCount_;
     
-    // Computed stats
-    int weekActivities_;
-    float weekDistance_;
-    int monthActivities_;
-    float monthDistance_;
+    // Animation
+    uint32_t animTime_;
+    
+    // Weekly data for bar chart (Sun=0 to Sat=6)
+    float weeklyMiles_[7];
+    float totalMiles_;
+    float goalMiles_;
+    int totalRuns_;
+    int todayDayOfWeek_;  // Which bar to highlight (0-6)
     
     // Helper to compute stats from activity data
     void computeStats();

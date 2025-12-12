@@ -669,3 +669,107 @@ bool StravaClient::syncActivitiesWithServer() {
      return false;
    }
 }
+
+bool StravaClient::fetchWeather(WeatherData* weather) {
+   if (!weather) {
+     Serial.println("[Weather] Error: Invalid weather pointer");
+     return false;
+   }
+   
+   Serial.println("[Weather] === Fetching Weather ===");
+   
+   String host = extractHost(String(BASE_URL));
+   uint16_t port = extractPort(String(BASE_URL));
+   
+   WiFiClient client;
+   if (!client.connect(host.c_str(), port)) {
+     Serial.println("[Weather] Connection failed");
+     return false;
+   }
+   
+   // Send GET request to /api/weather
+   String request = "GET /api/weather HTTP/1.1\r\n";
+   request += "Host: " + host + "\r\n";
+   request += "X-API-Key: " + String(API_KEY) + "\r\n";
+   request += "Connection: close\r\n";
+   request += "\r\n";
+   
+   Serial.println("[Weather] Sending weather request");
+   size_t sent = client.print(request);
+   if (sent == 0) {
+     Serial.println("[Weather] ERROR: Failed to send request");
+     client.stop();
+     return false;
+   }
+   
+   // Wait for response
+   unsigned long timeout = millis() + 10000;
+   while (client.connected() && !client.available() && millis() < timeout) {
+     delay(10);
+   }
+   
+   // Read status line
+   String statusLine = client.readStringUntil('\n');
+   int statusCode = 0;
+   if (statusLine.startsWith("HTTP/1.")) {
+     statusCode = statusLine.substring(9, 12).toInt();
+   }
+   
+   Serial.print("[Weather] Response code: ");
+   Serial.println(statusCode);
+   
+   if (statusCode != 200) {
+     client.stop();
+     return false;
+   }
+   
+   // Skip headers
+   String line;
+   while (client.available()) {
+     line = client.readStringUntil('\n');
+     if (line == "\r") {
+       break;
+     }
+   }
+   
+   // Read response body
+   String response = "";
+   while (client.available()) {
+     response += client.readString();
+   }
+   
+   client.stop();
+   
+   Serial.print("[Weather] Response: ");
+   Serial.println(response);
+   
+   // Parse JSON: {"condition":"sunny","temp_f":72,"humidity":45,"wind_speed":5.2}
+   JsonDocument doc;
+   DeserializationError error = deserializeJson(doc, response);
+   
+   if (error) {
+     Serial.print("[Weather] JSON parse error: ");
+     Serial.println(error.c_str());
+     return false;
+   }
+   
+   // Extract fields
+   const char* condition = doc["condition"] | "unknown";
+   strncpy(weather->condition, condition, sizeof(weather->condition) - 1);
+   weather->condition[sizeof(weather->condition) - 1] = '\0';
+   
+   weather->tempF = doc["temp_f"] | 0;
+   weather->humidity = doc["humidity"] | 0;
+   weather->windSpeed = doc["wind_speed"] | 0.0f;
+   
+   Serial.print("[Weather] Condition: ");
+   Serial.println(weather->condition);
+   Serial.print("[Weather] Temp: ");
+   Serial.print(weather->tempF);
+   Serial.println("F");
+   Serial.print("[Weather] Humidity: ");
+   Serial.print(weather->humidity);
+   Serial.println("%");
+   
+   return true;
+}
